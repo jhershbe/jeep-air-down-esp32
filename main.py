@@ -154,10 +154,15 @@ def script_js(request):
 def catch_all(request, path):
     return captive_portal_page()
 
-# Run the app (blocking, for debugging)
+# Run the app (non-blocking, with asyncio)
+async def main():
+    print('Starting Microdot server (asyncio mode)...')
+    # Start the server
+    await app.start_server(host='0.0.0.0', port=80)
+
 try:
-    print('Starting Microdot server (blocking mode)...')
-    app.run(host='0.0.0.0', port=80)
+    print('Starting async event loop...')
+    asyncio.run(main())
     print('Microdot server started!')
 except Exception as e:
     import sys
