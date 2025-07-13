@@ -127,20 +127,20 @@ def air_up(request):
     elif action == 'start':
         # Start command
         if not command_state[cmd]['running']:
+            # Initialize command state
             command_state[cmd]['running'] = True
             command_state[cmd]['cancel'] = False
+            command_state[cmd]['start_time'] = time.time()
             last_command_time[cmd] = time.time()
             
-            # Store start time
-            command_state[cmd]['start_time'] = time.time()
+            # Load the on-road pressure setpoint for air_up
+            s_onroad, s_offroad = load_setpoints()
+            target_psi = float(s_onroad)
+            command_state[cmd]['target_psi'] = target_psi
             
-            # Activate hardware
-            print(f"{cmd} started")
-            # TODO: Add hardware control
-            # relay_outputs[0].value(1)  # Turn on air compressor relay
-            
-            # Create async task for long-running operations
-            # We'll implement this after confirming basic functionality works
+            # Create async task for pressure adjustment
+            print(f"{cmd} started with target {target_psi} PSI")
+            asyncio.create_task(adjust_pressure(cmd, target_psi))
             
             return {
                 'status': 'started',
@@ -208,20 +208,20 @@ def air_down(request):
     elif action == 'start':
         # Start command
         if not command_state[cmd]['running']:
+            # Initialize command state
             command_state[cmd]['running'] = True
             command_state[cmd]['cancel'] = False
+            command_state[cmd]['start_time'] = time.time()
             last_command_time[cmd] = time.time()
             
-            # Store start time
-            command_state[cmd]['start_time'] = time.time()
+            # Load the off-road pressure setpoint for air_down
+            s_onroad, s_offroad = load_setpoints()
+            target_psi = float(s_offroad)
+            command_state[cmd]['target_psi'] = target_psi
             
-            # Activate hardware
-            print(f"{cmd} started")
-            # TODO: Add hardware control
-            # relay_outputs[1].value(1)  # Turn on release valve relay
-            
-            # Create async task for long-running operations
-            # We'll implement this after confirming basic functionality works
+            # Create async task for pressure adjustment
+            print(f"{cmd} started with target {target_psi} PSI")
+            asyncio.create_task(adjust_pressure(cmd, target_psi))
             
             return {
                 'status': 'started',
@@ -321,6 +321,43 @@ def catch_all(request, path):
 # Configuration for command execution
 COMMAND_DURATION = 10  # seconds for a command to complete
 last_command_time = {}  # Tracks when commands started (for backward compatibility)
+
+# Adaptive pressure control parameters
+PRESSURE_TOLERANCE = 0.3  # PSI tolerance for target pressure
+ADJUSTMENT_INTERVAL = 1.0  # Seconds between adjustments
+
+async def adjust_pressure(cmd, target_psi):
+    """Simple async task that gradually adjusts pressure to target"""
+    print(f"Starting pressure adjustment: {cmd} to {target_psi} PSI")
+    
+    # Continue until cancelled or command_state is marked as not running
+    while command_state[cmd]['running'] and not command_state[cmd]['cancel']:
+        # Read current pressure
+        current_psi = read_pressure()
+        pressure_diff = target_psi - current_psi
+        
+        # Within tolerance? We're done
+        if abs(pressure_diff) <= PRESSURE_TOLERANCE:
+            print(f"Target reached: {current_psi:.1f} PSI")
+            command_state[cmd]['running'] = False
+            break
+        
+        # For air_up: activate fill valve if below target
+        if cmd == 'air_up' and pressure_diff > 0:
+            print(f"Adjusting up: {current_psi:.1f} → {target_psi:.1f} PSI")
+            compressed_air_relay.value(1)  # Open fill valve
+            await asyncio.sleep(0.5)    # Short pulse
+            compressed_air_relay.value(0)  # Close fill valve
+        
+        # For air_down: activate vent valve if above target
+        elif cmd == 'air_down' and pressure_diff < 0:
+            print(f"Adjusting down: {current_psi:.1f} → {target_psi:.1f} PSI")
+            vent_air_relay.value(1)  # Open vent valve 
+            await asyncio.sleep(0.5)    # Short pulse
+            vent_air_relay.value(0)  # Close vent valve
+        
+        # Wait between adjustments
+        await asyncio.sleep(ADJUSTMENT_INTERVAL)
 
 async def check_command_status():
     """Background task that monitors command state and handles auto-completion"""
