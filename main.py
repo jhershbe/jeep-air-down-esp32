@@ -325,51 +325,120 @@ last_command_time = {}  # Tracks when commands started (for backward compatibili
 # Adaptive pressure control parameters
 PRESSURE_TOLERANCE = 0.3  # PSI tolerance for target pressure
 ADJUSTMENT_INTERVAL = 1.0  # Seconds between adjustments
+MIN_VALVE_TIME = 1.0     # Minimum valve open time (seconds)
+MAX_VALVE_TIME = 15     # Maximum valve open time (seconds)
+LEARNING_RATE = 0.3      # How quickly to adapt (0-1)
 
 async def adjust_pressure(cmd, target_psi):
-    """Simple async task that gradually adjusts pressure to target"""
+    """Adaptive pressure adjustment function that learns system behavior"""
     print(f"Starting pressure adjustment: {cmd} to {target_psi} PSI")
+    
+    # Initialize learning parameters if they don't exist
+    if 'observed_rate' not in command_state[cmd]:
+        command_state[cmd]['observed_rate'] = None
+    if 'last_pressure' not in command_state[cmd]:
+        command_state[cmd]['last_pressure'] = read_pressure()
+    if 'last_valve_time' not in command_state[cmd]:
+        command_state[cmd]['last_valve_time'] = 0.5  # Start conservative
+    if 'last_action_time' not in command_state[cmd]:
+        command_state[cmd]['last_action_time'] = time.time()
+    
+    # Flag to track if we're in learning mode or execution mode
+    learning_mode = command_state[cmd]['observed_rate'] is None
     
     # Continue until cancelled or command_state is marked as not running
     while command_state[cmd]['running'] and not command_state[cmd]['cancel']:
         # Read current pressure
         current_psi = read_pressure()
         pressure_diff = target_psi - current_psi
+        current_time = time.time()
         
         # Within tolerance? We're done
         if abs(pressure_diff) <= PRESSURE_TOLERANCE:
             print(f"Target reached: {current_psi:.1f} PSI")
             command_state[cmd]['running'] = False
             break
+            
+        # Check if we should measure the rate of change
+        time_since_last_action = current_time - command_state[cmd]['last_action_time']
+        if time_since_last_action > 1.0 and command_state[cmd]['last_pressure'] > 0:
+            # Calculate rate of change since last action
+            pressure_change = current_psi - command_state[cmd]['last_pressure']
+            rate = pressure_change / time_since_last_action  # PSI per second
+            
+            # If the pressure change is in the expected direction
+            valid_change = (cmd == 'air_up' and pressure_change > 0) or \
+                           (cmd == 'air_down' and pressure_change < 0)
+            
+            if valid_change and abs(rate) > 0.01:  # Ignore tiny changes
+                # Update observed rate with smoothing
+                rate = abs(rate)  # Use absolute value for calculations
+                if command_state[cmd]['observed_rate'] is None:
+                    command_state[cmd]['observed_rate'] = rate
+                    print(f"Initial {cmd} rate: {rate:.3f} PSI/sec")
+                else:
+                    # Apply learning rate for smooth updates
+                    command_state[cmd]['observed_rate'] = (
+                        (1 - LEARNING_RATE) * command_state[cmd]['observed_rate'] + 
+                        LEARNING_RATE * rate
+                    )
+                    print(f"Updated {cmd} rate: {command_state[cmd]['observed_rate']:.3f} PSI/sec")
+        
+        # Determine valve open time based on learning
+        valve_time = 3.0  # Default conservative time
+        
+        # If we've observed a rate, calculate optimal valve time
+        if command_state[cmd]['observed_rate'] is not None and abs(command_state[cmd]['observed_rate']) > 0.01:
+            # Calculate how long to open valve to get close to target
+            # Use 80% of calculated time as a safety factor
+            valve_time = abs(pressure_diff) * 0.8 / command_state[cmd]['observed_rate']
+            
+            # Apply limits for safety
+            valve_time = max(MIN_VALVE_TIME, min(MAX_VALVE_TIME, valve_time))
+            
+            # If very close to target, use minimum time
+            if abs(pressure_diff) < 1.0:
+                valve_time = MIN_VALVE_TIME
         
         # For air_up: activate fill valve if below target
         if cmd == 'air_up' and pressure_diff > 0:
-            print(f"Adjusting up: {current_psi:.1f} → {target_psi:.1f} PSI")
+            # Store current state for learning
+            command_state[cmd]['last_pressure'] = current_psi
+            command_state[cmd]['last_action_time'] = current_time
+            command_state[cmd]['last_valve_time'] = valve_time
+            
+            print(f"Adjusting up: {current_psi:.1f} → {target_psi:.1f} PSI (valve: {valve_time:.2f}s)")
             compressed_air_relay.value(1)  # Open fill valve
-            await asyncio.sleep(0.5)    # Short pulse
+            await asyncio.sleep(valve_time)
             compressed_air_relay.value(0)  # Close fill valve
         
         # For air_down: activate vent valve if above target
         elif cmd == 'air_down' and pressure_diff < 0:
-            print(f"Adjusting down: {current_psi:.1f} → {target_psi:.1f} PSI")
+            # Store current state for learning
+            command_state[cmd]['last_pressure'] = current_psi
+            command_state[cmd]['last_action_time'] = current_time
+            command_state[cmd]['last_valve_time'] = valve_time
+            
+            print(f"Adjusting down: {current_psi:.1f} → {target_psi:.1f} PSI (valve: {valve_time:.2f}s)")
             vent_air_relay.value(1)  # Open vent valve 
-            await asyncio.sleep(0.5)    # Short pulse
+            await asyncio.sleep(valve_time)
             vent_air_relay.value(0)  # Close vent valve
         
-        # Wait between adjustments
-        await asyncio.sleep(ADJUSTMENT_INTERVAL)
+        # Wait between adjustments - longer wait if we just made a big adjustment
+        wait_time = max(ADJUSTMENT_INTERVAL, valve_time * 2)
+        await asyncio.sleep(wait_time)
 
 async def check_command_status():
-    """Background task that monitors command state and handles auto-completion"""
+    """Background task that monitors command state"""
     while True:
         current_time = time.time()
         
         # Check both commands
         for cmd in ['air_up', 'air_down']:
-            # Check if command is running (two ways to check for compatibility)
+            # Check if command is running
             is_running = command_state[cmd]['running']
             
-            # Safely access start_time (may not exist in older command_state structures)
+            # Safely access start_time
             start_time = 0
             if 'start_time' in command_state[cmd]:
                 start_time = command_state[cmd]['start_time']
@@ -377,7 +446,7 @@ async def check_command_status():
             has_start_time = cmd in last_command_time or start_time > 0
             
             if is_running and has_start_time:
-                # Get elapsed time (support both tracking methods)
+                # Calculate elapsed time (for status reporting only)
                 start_time = 0
                 if 'start_time' in command_state[cmd]:
                     start_time = command_state[cmd]['start_time']
@@ -386,30 +455,13 @@ async def check_command_status():
                 if start_time == 0 and cmd in last_command_time:
                     start_time = last_command_time[cmd]
                 
+                # Just log the elapsed time (for monitoring purposes)
                 elapsed = current_time - start_time
-                
-                # Check if command should auto-complete
-                if elapsed > COMMAND_DURATION:
-                    print(f"{cmd} auto-completed after {elapsed:.1f} seconds")
-                    
-                    # Reset command state
-                    command_state[cmd]['running'] = False
-                    command_state[cmd]['cancel'] = False
-                    
-                    # Safely update start_time if it exists
-                    if 'start_time' in command_state[cmd]:
-                        command_state[cmd]['start_time'] = 0
-                    
-                    # Clean up legacy tracking
-                    if cmd in last_command_time:
-                        del last_command_time[cmd]
-                        
-                    # TODO: Turn off hardware here
-                    # if cmd == 'air_up':
-                    #     compressed_air_relay.value(0)  # Turn off air compressor
-                    # elif cmd == 'air_down':
-                    #     vent_air_relay.value(0)  # Turn off release valve
-        
+                if (int(elapsed) % 3) == 0:  # Log every 3 seconds
+                    target_psi = command_state[cmd].get('target_psi', 0)
+                    current_psi = read_pressure()
+                    print(f"{cmd} running for {elapsed:.1f} seconds, current: {current_psi:.1f} target: {target_psi:.1f}")
+
         # Check once per second
         await asyncio.sleep(1)
 
