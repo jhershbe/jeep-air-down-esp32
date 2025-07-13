@@ -365,7 +365,7 @@ COMMAND_DURATION = 10  # seconds for a command to complete
 last_command_time = {}  # Tracks when commands started (for backward compatibility)
 
 # Adaptive pressure control parameters
-PRESSURE_TOLERANCE = 0.3  # PSI tolerance for target pressure
+PRESSURE_TOLERANCE = 0.5  # PSI tolerance for target pressure
 ADJUSTMENT_INTERVAL = 1.0  # Seconds between adjustments
 MIN_VALVE_TIME = 1.0     # Minimum valve open time (seconds)
 MAX_VALVE_TIME = 15     # Maximum valve open time (seconds)
@@ -396,9 +396,16 @@ async def adjust_pressure(cmd, target_psi):
         pressure_diff = target_psi - current_psi
         current_time = time.time()
         
-        # Within tolerance? We're done
+        # Check if we've reached or overshot the target
         if abs(pressure_diff) <= PRESSURE_TOLERANCE:
+            # Within tolerance - perfect!
             print(f"Target reached: {current_psi:.1f} PSI")
+            command_state[cmd]['running'] = False
+            break
+        elif (cmd == 'air_up' and current_psi > target_psi) or \
+             (cmd == 'air_down' and current_psi < target_psi):
+            # Overshot the target - just stop
+            print(f"Target overshot: {current_psi:.1f} PSI (target was {target_psi:.1f})")
             command_state[cmd]['running'] = False
             break
             
