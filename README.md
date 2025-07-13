@@ -85,10 +85,77 @@ You can further customize the appearance by serving a custom icon as `/icon.png`
 
 ---
 
+## Optimizing Performance with mpy-cross
+
+### What is mpy-cross?
+`mpy-cross` is a cross-compiler that converts MicroPython `.py` files into precompiled `.mpy` bytecode files. This has several advantages for ESP32 projects:
+
+- **Reduced memory usage**: `.mpy` files consume less RAM when imported
+- **Faster import times**: No need to compile code on the ESP32
+- **More stable WiFi**: Less memory pressure helps maintain WiFi connectivity
+- **Improved startup time**: The ESP32 boots faster with precompiled modules
+
+### Installation
+
+#### Option 1: Install via pip (Easiest)
+```bash
+# For any platform (Windows, macOS, Linux)
+pip install mpy-cross
+
+# Verify installation
+mpy-cross --version
+```
+
+#### Option 2: Download binary
+
+1. **Download mpy-cross**:
+   - Visit the [MicroPython GitHub Releases page](https://github.com/micropython/micropython/releases)
+   - Find the latest release that matches your MicroPython firmware version
+   - Download the appropriate mpy-cross for your OS (Windows/Linux/Mac)
+
+2. **Windows Installation**:
+   ```
+   # Extract the downloaded zip file
+   # Add the mpy-cross directory to your PATH or use the full path
+   ```
+
+3. **Linux/Mac Installation**:
+   ```bash
+   chmod +x mpy-cross  # Make executable
+   sudo mv mpy-cross /usr/local/bin/  # Move to path (optional)
+   ```
+
+### Compiling Libraries
+
+```bash
+# Basic usage
+mpy-cross microdot.py
+
+# For specific architecture (if needed)
+mpy-cross -march=xtensawin microdot.py
+```
+
+This will create a `microdot.mpy` file that can be uploaded to the ESP32 instead of the `.py` version.
+
+### Uploading Compiled Files
+
+1. In Thonny, right-click the `.mpy` file and select "Upload to /"
+2. Delete the corresponding `.py` file from the ESP32 if it exists
+3. The ESP32 will now use the `.mpy` file automatically
+
+### Recommended Libraries to Compile
+- `microdot.py` → `microdot.mpy` (significant memory savings)
+- Any other third-party libraries you're using
+
+**Note**: Don't compile `main.py` or files you frequently modify during development.
+
+---
+
 ## Troubleshooting
 - If the web page does not load, ensure your phone is connected to the ESP32 WiFi and not using cellular data.
-- If you see errors in Thonny, check that both `main.py` and `microdot.py` are present on the ESP32.
+- If you see errors in Thonny, check that both `main.py` and either `microdot.py` or `microdot.mpy` are present on the ESP32.
 - The captive portal may not automatically pop up on iOS; manually visit [http://192.168.4.1](http://192.168.4.1).
+- If you experience WiFi connectivity issues, try using the `.mpy` compilation approach described above to reduce memory pressure.
 
 ---
 
