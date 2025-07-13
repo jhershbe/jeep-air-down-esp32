@@ -110,11 +110,6 @@ def handle_air_down():
     print('Air Down command received')
     # TODO: Add logic to control hardware for Air Down
 
-@app.route('/style.css')
-def style_css(request):
-    with open('style.css') as f:
-        css = f.read()
-    return Response(body=css, headers={'Content-Type': 'text/css'})
 
 @app.route('/pressure')
 def get_pressure(request):
@@ -142,6 +137,12 @@ def captive_redirect(request):
     return captive_portal_page()
 
 # Static file routes - Must come BEFORE catch-all route
+@app.route('/style.css')
+def style_css(request):
+    with open('style.css') as f:
+        css = f.read()
+    return Response(body=css, headers={'Content-Type': 'text/css'})
+
 @app.route('/script.js')
 def script_js(request):
     with open('script.js') as f:
