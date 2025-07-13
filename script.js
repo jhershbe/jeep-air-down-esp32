@@ -197,8 +197,8 @@ function checkAirDownStatus() {
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-refresh pressure every 2 seconds
-    setInterval(refreshPressure, 2000);
+    // Auto-refresh pressure every 1000ms to avoid overwhelming the ESP32
+    setInterval(refreshPressure, 1000);
     refreshPressure();
     loadSetpoints();
 });
