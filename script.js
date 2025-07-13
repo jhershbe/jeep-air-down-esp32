@@ -64,7 +64,7 @@ function airUp() {
                 if (data.status === 'started' || data.status === 'already_running') {
                     airUpActive = true;
                     btn.disabled = false;
-                    btn.textContent = 'Cancel Air Up';
+                    btn.textContent = 'Cancel (0.0s)'; // Set initial timer text
                     checkAirUpStatus();
                 } else {
                     btn.style.backgroundColor = '';
@@ -111,9 +111,10 @@ function airDown() {
                 if (data.status === 'started' || data.status === 'already_running') {
                     airDownActive = true;
                     btn.disabled = false;
-                    btn.textContent = 'Cancel Air Down';
+                    btn.textContent = 'Cancel (0.0s)'; // Set initial timer text
                     checkAirDownStatus();
                 } else {
+                    // Error or other status
                     btn.style.backgroundColor = '';
                     btn.style.color = '';
                     btn.disabled = false;
@@ -141,14 +142,24 @@ function checkAirUpStatus() {
         .then(data => {
             const btn = document.querySelector('.air-up');
             if (data.status === 'running') {
-                // Still running, check again in 1 second
+                // Get elapsed time from API response (already calculated on server)
+                const elapsedTime = data.time || 0;
+                const formattedTime = elapsedTime.toFixed(1);
+                
+                // Update button text with elapsed time
+                btn.textContent = `Cancel (${formattedTime}s)`;
+                
+                // Simple static highlight color for active state
+                btn.style.backgroundColor = '#bae6fd'; // Light blue
+                
+                // Use 1000ms refresh to avoid overwhelming the ESP32
                 setTimeout(checkAirUpStatus, 1000);
             } else {
                 // Completed or cancelled
                 airUpActive = false;
                 btn.style.backgroundColor = '';
                 btn.style.color = '';
-                btn.textContent = 'Air Up';
+                btn.textContent = 'Air Up'; // Restore button text
             }
         });
 }
@@ -162,14 +173,24 @@ function checkAirDownStatus() {
         .then(data => {
             const btn = document.querySelector('.air-down');
             if (data.status === 'running') {
-                // Still running, check again in 1 second
+                // Get elapsed time from API response (already calculated on server)
+                const elapsedTime = data.time || 0;
+                const formattedTime = elapsedTime.toFixed(1);
+                
+                // Update button text with elapsed time
+                btn.textContent = `Cancel (${formattedTime}s)`;
+                
+                // Simple static highlight color for active state
+                btn.style.backgroundColor = '#bae6fd'; // Light blue
+                
+                // Use 1000ms refresh to avoid overwhelming the ESP32
                 setTimeout(checkAirDownStatus, 1000);
             } else {
                 // Completed or cancelled
                 airDownActive = false;
                 btn.style.backgroundColor = '';
                 btn.style.color = '';
-                btn.textContent = 'Air Down';
+                btn.textContent = 'Air Down'; // Restore button text
             }
         });
 }
