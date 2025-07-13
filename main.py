@@ -27,7 +27,7 @@ relay_outputs = [machine.Pin(pin, machine.Pin.OUT) for pin in relay_pins]
 compressed_air_relay = relay_outputs[0]
 vent_air_relay = relay_outputs[1]
 pressure_adc = machine.ADC(machine.Pin(32))
-pressure_adc.atten(machine.ADC.ATTN_2_5DB)
+pressure_adc.atten(machine.ADC.ATTN_11DB)
 
 # WiFi Access Point Setup
 ap = network.WLAN(network.AP_IF)
@@ -272,12 +272,12 @@ def air_down(request):
 # Utility function for internal pressure reading
 def read_pressure():
     """Read pressure sensor and return PSI value"""
-    # Average 256 readings for noise reduction
+    # Average 16 readings for noise reduction
     pres_raw = 0
-    for _ in range(256):
-        pres_raw += pressure_adc.read_uv() if hasattr(pressure_adc, 'read_uv') else pressure_adc.read()
-    pres_raw = pres_raw >> 8
-    pres_psi = (pres_raw - 5000000) * 0.00005 if hasattr(pressure_adc, 'read_uv') else pres_raw * 0.001  # fallback
+    for _ in range(16):
+        pres_raw += pressure_adc.read_uv()
+    pres_raw = pres_raw >> 4
+    pres_psi = (pres_raw - 500000) * 0.00005
     if pres_psi < 0.0:
         pres_psi = 0.0
     return pres_psi
