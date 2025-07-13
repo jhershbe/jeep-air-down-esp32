@@ -368,7 +368,8 @@ last_command_time = {}  # Tracks when commands started (for backward compatibili
 PRESSURE_TOLERANCE = 0.5  # PSI tolerance for target pressure
 ADJUSTMENT_INTERVAL = 1.0  # Seconds between adjustments
 MIN_VALVE_TIME = 1.0     # Minimum valve open time (seconds)
-MAX_VALVE_TIME = 15     # Maximum valve open time (seconds)
+MAX_VALVE_TIME_UP = 30.0  # Maximum valve open time for air_up (seconds)
+MAX_VALVE_TIME_DOWN = 60.0  # Maximum valve open time for air_down (seconds)
 LEARNING_RATE = 0.3      # How quickly to adapt (0-1)
 
 async def adjust_pressure(cmd, target_psi):
@@ -443,8 +444,13 @@ async def adjust_pressure(cmd, target_psi):
             # Use 80% of calculated time as a safety factor
             valve_time = abs(pressure_diff) * 0.8 / command_state[cmd]['observed_rate']
             
-            # Apply limits for safety
-            valve_time = max(MIN_VALVE_TIME, min(MAX_VALVE_TIME, valve_time))
+            # Apply appropriate limits based on operation type
+            if cmd == 'air_down':
+                # Air down typically has lower flow rate
+                valve_time = max(MIN_VALVE_TIME, min(MAX_VALVE_TIME_DOWN, valve_time))
+            else:  # air_up
+                # Air up typically has higher flow rate
+                valve_time = max(MIN_VALVE_TIME, min(MAX_VALVE_TIME_UP, valve_time))
             
             # If very close to target, use minimum time
             if abs(pressure_diff) < 1.0:
