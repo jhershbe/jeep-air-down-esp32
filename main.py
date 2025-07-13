@@ -510,12 +510,9 @@ async def check_command_status():
                 if start_time == 0 and cmd in last_command_time:
                     start_time = last_command_time[cmd]
                 
-                # Just log the elapsed time (for monitoring purposes)
+                # Calculate elapsed time (for status API)
                 elapsed = current_time - start_time
-                if (int(elapsed) % 3) == 0:  # Log every 3 seconds
-                    target_psi = command_state[cmd].get('target_psi', 0)
-                    current_psi = read_pressure()
-                    print(f"{cmd} running for {elapsed:.1f} seconds, current: {current_psi:.1f} target: {target_psi:.1f}")
+                # No logging here - removing periodic status updates
 
         # Check once per second
         await asyncio.sleep(1)
