@@ -269,8 +269,9 @@ def air_down(request):
         'message': f"Unknown action: {action}"
     }
 
-@app.route('/pressure')
-def get_pressure(request):
+# Utility function for internal pressure reading
+def read_pressure():
+    """Read pressure sensor and return PSI value"""
     # Average 256 readings for noise reduction
     pres_raw = 0
     for _ in range(256):
@@ -279,7 +280,12 @@ def get_pressure(request):
     pres_psi = (pres_raw - 5000000) * 0.00005 if hasattr(pressure_adc, 'read_uv') else pres_raw * 0.001  # fallback
     if pres_psi < 0.0:
         pres_psi = 0.0
-    return {"pressure": round(pres_psi, 2)}
+    return pres_psi
+
+@app.route('/pressure')
+def get_pressure(request):
+    """API endpoint for pressure reading"""
+    return {"pressure": round(read_pressure(), 2)}
 
 # Captive portal redirect for common OS probes
 def captive_portal_page():
