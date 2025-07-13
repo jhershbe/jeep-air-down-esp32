@@ -130,25 +130,8 @@ def get_pressure(request):
 
 # Captive portal redirect for common OS probes
 def captive_portal_page():
-    return Response(body="""
-<html>
-<head><title>ESP32 Air Control</title></head>
-<body>
-    <h2>Air Pressure Sensor</h2>
-    <div>Pressure: <span id='pressure'>--</span> PSI</div>
-    <button onclick='refreshPressure()'>Refresh</button>
-    <script>
-    function refreshPressure() {
-        fetch('/pressure').then(r => r.json()).then(d => {
-            document.getElementById('pressure').innerText = d.pressure;
-        });
-    }
-    // Auto-refresh on page load
-    refreshPressure();
-    </script>
-</body>
-</html>
-""", headers={'Content-Type': 'text/html'})
+    # Return the same response as the main index route
+    return index(None)
 
 @app.route('/generate_204')
 @app.route('/fwlink')
