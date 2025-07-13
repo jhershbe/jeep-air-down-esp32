@@ -465,8 +465,23 @@ async def adjust_pressure(cmd, target_psi):
             
             print(f"Adjusting up: {current_psi:.1f} → {target_psi:.1f} PSI (valve: {valve_time:.2f}s)")
             compressed_air_relay.value(1)  # Open fill valve
-            await asyncio.sleep(valve_time)
-            compressed_air_relay.value(0)  # Close fill valve
+            
+            # Break valve operation into small chunks to check for cancel
+            start_valve_time = time.time()
+            while time.time() - start_valve_time < valve_time:
+                # Check if operation was cancelled
+                if command_state[cmd]['cancel']:
+                    print(f"{cmd} cancelled during valve operation")
+                    break
+                # Sleep in small increments
+                await asyncio.sleep(0.1)
+                
+            compressed_air_relay.value(0)  # Always close fill valve
+            
+            # If cancelled, exit the loop
+            if command_state[cmd]['cancel']:
+                command_state[cmd]['running'] = False
+                break
         
         # For air_down: activate vent valve if above target
         elif cmd == 'air_down' and pressure_diff < 0:
@@ -476,9 +491,24 @@ async def adjust_pressure(cmd, target_psi):
             command_state[cmd]['last_valve_time'] = valve_time
             
             print(f"Adjusting down: {current_psi:.1f} → {target_psi:.1f} PSI (valve: {valve_time:.2f}s)")
-            vent_air_relay.value(1)  # Open vent valve 
-            await asyncio.sleep(valve_time)
-            vent_air_relay.value(0)  # Close vent valve
+            vent_air_relay.value(1)  # Open vent valve
+            
+            # Break valve operation into small chunks to check for cancel
+            start_valve_time = time.time()
+            while time.time() - start_valve_time < valve_time:
+                # Check if operation was cancelled
+                if command_state[cmd]['cancel']:
+                    print(f"{cmd} cancelled during valve operation")
+                    break
+                # Sleep in small increments
+                await asyncio.sleep(0.1)
+                
+            vent_air_relay.value(0)  # Always close vent valve
+            
+            # If cancelled, exit the loop
+            if command_state[cmd]['cancel']:
+                command_state[cmd]['running'] = False
+                break
         
         # No additional waiting needed - the wait_for_stable_pressure call
         # at the beginning of the loop already ensures adequate settling time
