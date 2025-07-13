@@ -75,40 +75,7 @@ def index(request):
         </div>
 
     </div>
-    <script>
-    function refreshPressure() {
-        fetch('/pressure').then(r => r.json()).then(d => {
-            document.getElementById('pressure').innerText = d.pressure;
-        });
-    }
-    function loadSetpoints() {
-        fetch('/get_setpoints').then(r => r.json()).then(d => {
-            document.getElementById('setpoint_onroad').value = d.setpoint_onroad;
-            document.getElementById('setpoint_offroad').value = d.setpoint_offroad;
-        });
-    }
-    function saveSetpoints() {
-        const s_onroad = document.getElementById('setpoint_onroad').value;
-        const s_offroad = document.getElementById('setpoint_offroad').value;
-        fetch('/set_setpoints', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({setpoint_onroad: s_onroad, setpoint_offroad: s_offroad})
-        }).then(() => alert('Setpoints saved!'));
-    }
-    function airUp() {
-        fetch('/air_up', {method: 'POST'})
-            .then(() => alert('Air Up command sent!'));
-    }
-    function airDown() {
-        fetch('/air_down', {method: 'POST'})
-            .then(() => alert('Air Down command sent!'));
-    }
-    // Auto-refresh pressure every 2 seconds
-    setInterval(refreshPressure, 2000);
-    refreshPressure();
-    loadSetpoints();
-    </script>
+    <script src='/script.js'></script>
 </body>
 </html>
 """, headers={'Content-Type': 'text/html'})
@@ -190,6 +157,13 @@ def captive_portal_page():
 def captive_redirect(request):
     # Serve the captive portal page directly
     return captive_portal_page()
+
+# Static file routes - Must come BEFORE catch-all route
+@app.route('/script.js')
+def script_js(request):
+    with open('script.js') as f:
+        js = f.read()
+    return Response(body=js, headers={'Content-Type': 'application/javascript'})
 
 # Catch-all: serve the captive portal page for all unknown URLs
 @app.route('/<path:path>')
