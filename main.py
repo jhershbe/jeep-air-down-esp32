@@ -24,6 +24,8 @@ def save_setpoints(s_onroad, s_offroad):
 # Pin definitions (customize as needed)
 relay_pins = [12, 13, 14, 25]
 relay_outputs = [machine.Pin(pin, machine.Pin.OUT) for pin in relay_pins]
+compressed_air_relay = relay_outputs[0]
+vent_air_relay = relay_outputs[1]
 pressure_adc = machine.ADC(machine.Pin(32))
 pressure_adc.atten(machine.ADC.ATTN_2_5DB)
 
@@ -161,7 +163,7 @@ def air_up(request):
             # Deactivate hardware
             print(f"{cmd} cancelled")
             # TODO: Add hardware control
-            # relay_outputs[0].value(0)  # Turn off air compressor relay
+            # compressed_air_relay.value(0)  # Turn off air compressor relay
             
             # Clean up timers
             if cmd in last_command_time:
@@ -242,7 +244,7 @@ def air_down(request):
             # Deactivate hardware
             print(f"{cmd} cancelled")
             # TODO: Add hardware control
-            # relay_outputs[1].value(0)  # Turn off release valve relay
+            # vent_air_relay.value(0)  # Turn off release valve relay
             
             # Clean up timers
             if cmd in last_command_time:
@@ -361,9 +363,9 @@ async def check_command_status():
                         
                     # TODO: Turn off hardware here
                     # if cmd == 'air_up':
-                    #     relay_outputs[0].value(0)  # Turn off air compressor
+                    #     compressed_air_relay.value(0)  # Turn off air compressor
                     # elif cmd == 'air_down':
-                    #     relay_outputs[1].value(0)  # Turn off release valve
+                    #     vent_air_relay.value(0)  # Turn off release valve
         
         # Check once per second
         await asyncio.sleep(1)
