@@ -45,6 +45,12 @@ import uasyncio as asyncio
 app = Microdot()
 Response.default_content_type = 'application/json'
 
+# --- Command state tracking dictionary ---
+command_state = {
+    'air_up': {'running': False, 'cancel': False, 'task': None},
+    'air_down': {'running': False, 'cancel': False, 'task': None}
+}
+
 # Simple captive portal handler
 @app.route('/')
 def index(request):
@@ -91,25 +97,175 @@ def set_setpoints(request):
     save_setpoints(data.get('setpoint_onroad', 0), data.get('setpoint_offroad', 0))
     return {'status': 'ok'}
 
-@app.route('/air_up', methods=['POST'])
+# --- Command state tracking dictionary ---
+command_state = {
+    'air_up': {'running': False, 'cancel': False, 'task': None},
+    'air_down': {'running': False, 'cancel': False, 'task': None}
+}
+
+# RESTful Air Command API
+
+# Air Up command API
+@app.route('/air_up', methods=['POST', 'GET'])
 def air_up(request):
-    handle_air_up()
-    return {'status': 'air_up_triggered'}
+    """RESTful endpoint for air up operations"""
+    # Get action from URL parameters (default to 'start')
+    action = request.args.get('action', 'start')
+    cmd = 'air_up'
+    
+    if action == 'status':
+        # Status query doesn't change state
+        is_running = command_state[cmd]['running']
+        return {
+            'status': 'running' if is_running else 'idle',
+            'command': cmd,
+            'time': time.time() - last_command_time.get(cmd, 0) if is_running else 0
+        }
+    
+    elif action == 'start':
+        # Start command
+        if not command_state[cmd]['running']:
+            command_state[cmd]['running'] = True
+            command_state[cmd]['cancel'] = False
+            last_command_time[cmd] = time.time()
+            
+            # Store start time
+            command_state[cmd]['start_time'] = time.time()
+            
+            # Activate hardware
+            print(f"{cmd} started")
+            # TODO: Add hardware control
+            # relay_outputs[0].value(1)  # Turn on air compressor relay
+            
+            # Create async task for long-running operations
+            # We'll implement this after confirming basic functionality works
+            
+            return {
+                'status': 'started',
+                'command': cmd,
+                'message': 'Air up operation started'
+            }
+        else:
+            return {
+                'status': 'already_running',
+                'command': cmd,
+                'message': 'Air up operation already in progress'
+            }
+    
+    elif action == 'cancel':
+        # Cancel command
+        if command_state[cmd]['running']:
+            command_state[cmd]['cancel'] = True
+            command_state[cmd]['running'] = False
+            
+            # Deactivate hardware
+            print(f"{cmd} cancelled")
+            # TODO: Add hardware control
+            # relay_outputs[0].value(0)  # Turn off air compressor relay
+            
+            # Clean up timers
+            if cmd in last_command_time:
+                del last_command_time[cmd]
+                
+            return {
+                'status': 'cancelled',
+                'command': cmd,
+                'message': 'Air up operation cancelled'
+            }
+        else:
+            return {
+                'status': 'not_running',
+                'command': cmd,
+                'message': 'No air up operation in progress'
+            }
+    
+    # Invalid action
+    return {
+        'status': 'error',
+        'command': cmd,
+        'message': f"Unknown action: {action}"
+    }
 
-@app.route('/air_down', methods=['POST'])
+# Air Down command API
+@app.route('/air_down', methods=['POST', 'GET'])
 def air_down(request):
-    handle_air_down()
-    return {'status': 'air_down_triggered'}
-
-# User command handlers (implement logic as needed)
-def handle_air_up():
-    print('Air Up command received')
-    # TODO: Add logic to control hardware for Air Up
-
-def handle_air_down():
-    print('Air Down command received')
-    # TODO: Add logic to control hardware for Air Down
-
+    """RESTful endpoint for air down operations"""
+    # Get action from URL parameters (default to 'start')
+    action = request.args.get('action', 'start')
+    cmd = 'air_down'
+    
+    if action == 'status':
+        # Status query doesn't change state
+        is_running = command_state[cmd]['running']
+        return {
+            'status': 'running' if is_running else 'idle',
+            'command': cmd,
+            'time': time.time() - last_command_time.get(cmd, 0) if is_running else 0
+        }
+    
+    elif action == 'start':
+        # Start command
+        if not command_state[cmd]['running']:
+            command_state[cmd]['running'] = True
+            command_state[cmd]['cancel'] = False
+            last_command_time[cmd] = time.time()
+            
+            # Store start time
+            command_state[cmd]['start_time'] = time.time()
+            
+            # Activate hardware
+            print(f"{cmd} started")
+            # TODO: Add hardware control
+            # relay_outputs[1].value(1)  # Turn on release valve relay
+            
+            # Create async task for long-running operations
+            # We'll implement this after confirming basic functionality works
+            
+            return {
+                'status': 'started',
+                'command': cmd,
+                'message': 'Air down operation started'
+            }
+        else:
+            return {
+                'status': 'already_running',
+                'command': cmd,
+                'message': 'Air down operation already in progress'
+            }
+    
+    elif action == 'cancel':
+        # Cancel command
+        if command_state[cmd]['running']:
+            command_state[cmd]['cancel'] = True
+            command_state[cmd]['running'] = False
+            
+            # Deactivate hardware
+            print(f"{cmd} cancelled")
+            # TODO: Add hardware control
+            # relay_outputs[1].value(0)  # Turn off release valve relay
+            
+            # Clean up timers
+            if cmd in last_command_time:
+                del last_command_time[cmd]
+                
+            return {
+                'status': 'cancelled',
+                'command': cmd,
+                'message': 'Air down operation cancelled'
+            }
+        else:
+            return {
+                'status': 'not_running',
+                'command': cmd,
+                'message': 'No air down operation in progress'
+            }
+    
+    # Invalid action
+    return {
+        'status': 'error',
+        'command': cmd,
+        'message': f"Unknown action: {action}"
+    }
 
 @app.route('/pressure')
 def get_pressure(request):
@@ -154,9 +310,69 @@ def script_js(request):
 def catch_all(request, path):
     return captive_portal_page()
 
+# Configuration for command execution
+COMMAND_DURATION = 10  # seconds for a command to complete
+last_command_time = {}  # Tracks when commands started (for backward compatibility)
+
+async def check_command_status():
+    """Background task that monitors command state and handles auto-completion"""
+    while True:
+        current_time = time.time()
+        
+        # Check both commands
+        for cmd in ['air_up', 'air_down']:
+            # Check if command is running (two ways to check for compatibility)
+            is_running = command_state[cmd]['running']
+            
+            # Safely access start_time (may not exist in older command_state structures)
+            start_time = 0
+            if 'start_time' in command_state[cmd]:
+                start_time = command_state[cmd]['start_time']
+                
+            has_start_time = cmd in last_command_time or start_time > 0
+            
+            if is_running and has_start_time:
+                # Get elapsed time (support both tracking methods)
+                start_time = 0
+                if 'start_time' in command_state[cmd]:
+                    start_time = command_state[cmd]['start_time']
+                    
+                # Fall back to legacy timing if needed
+                if start_time == 0 and cmd in last_command_time:
+                    start_time = last_command_time[cmd]
+                
+                elapsed = current_time - start_time
+                
+                # Check if command should auto-complete
+                if elapsed > COMMAND_DURATION:
+                    print(f"{cmd} auto-completed after {elapsed:.1f} seconds")
+                    
+                    # Reset command state
+                    command_state[cmd]['running'] = False
+                    command_state[cmd]['cancel'] = False
+                    
+                    # Safely update start_time if it exists
+                    if 'start_time' in command_state[cmd]:
+                        command_state[cmd]['start_time'] = 0
+                    
+                    # Clean up legacy tracking
+                    if cmd in last_command_time:
+                        del last_command_time[cmd]
+                        
+                    # TODO: Turn off hardware here
+                    # if cmd == 'air_up':
+                    #     relay_outputs[0].value(0)  # Turn off air compressor
+                    # elif cmd == 'air_down':
+                    #     relay_outputs[1].value(0)  # Turn off release valve
+        
+        # Check once per second
+        await asyncio.sleep(1)
+
 # Run the app (non-blocking, with asyncio)
 async def main():
     print('Starting Microdot server (asyncio mode)...')
+    # Start the command status checker in the background
+    asyncio.create_task(check_command_status())
     # Start the server
     await app.start_server(host='0.0.0.0', port=80)
 

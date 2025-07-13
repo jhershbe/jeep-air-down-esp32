@@ -1,3 +1,7 @@
+// Command state for Air Up/Down
+let airUpActive = false;
+let airDownActive = false;
+
 // Refresh pressure reading
 function refreshPressure() {
     fetch('/pressure').then(r => r.json()).then(d => {
@@ -15,25 +19,137 @@ function loadSetpoints() {
 
 // Save setpoints with visual feedback
 function saveSetpoints() {
+    const btn = document.querySelector('.save-setpoints');
+    const originalBg = btn.style.backgroundColor;
+    const originalColor = btn.style.color;
+    btn.style.backgroundColor = '#bae6fd'; // mild baby blue
+    btn.style.color = '#2563eb'; // blue text for contrast
+    btn.disabled = true;
     const s_onroad = document.getElementById('setpoint_onroad').value;
     const s_offroad = document.getElementById('setpoint_offroad').value;
     fetch('/set_setpoints', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({setpoint_onroad: s_onroad, setpoint_offroad: s_offroad})
-    }).then(() => alert('Setpoints saved!'));
+    }).then(() => {
+        btn.style.backgroundColor = originalBg;
+        btn.style.color = originalColor;
+        btn.disabled = false;
+    });
 }
 
 // Air Up with visual feedback and cancellation
 function airUp() {
-        fetch('/air_up', {method: 'POST'})
-            .then(() => alert('Air Up command sent!'));
+    const btn = document.querySelector('.air-up');
+    if (!airUpActive) {
+        // Start operation
+        btn.style.backgroundColor = '#bae6fd';
+        btn.style.color = '#2563eb';
+        btn.disabled = true;
+        
+        fetch('/air_up?action=start', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'started' || data.status === 'already_running') {
+                    airUpActive = true;
+                    btn.disabled = false;
+                    btn.textContent = 'Cancel Air Up';
+                    checkAirUpStatus();
+                } else {
+                    btn.style.backgroundColor = '';
+                    btn.style.color = '';
+                    btn.disabled = false;
+                }
+            });
+    } else {
+        // Cancel operation
+        fetch('/air_up?action=cancel', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                airUpActive = false;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                btn.textContent = 'Air Up';
+            });
+    }
 }
 
 // Air Down with visual feedback and cancellation
 function airDown() {
-        fetch('/air_down', {method: 'POST'})
-            .then(() => alert('Air Down command sent!'));
+    const btn = document.querySelector('.air-down');
+    if (!airDownActive) {
+        // Start operation
+        btn.style.backgroundColor = '#bae6fd';
+        btn.style.color = '#2563eb';
+        btn.disabled = true;
+        
+        fetch('/air_down?action=start', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'started' || data.status === 'already_running') {
+                    airDownActive = true;
+                    btn.disabled = false;
+                    btn.textContent = 'Cancel Air Down';
+                    checkAirDownStatus();
+                } else {
+                    btn.style.backgroundColor = '';
+                    btn.style.color = '';
+                    btn.disabled = false;
+                }
+            });
+    } else {
+        // Cancel operation
+        fetch('/air_down?action=cancel', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                airDownActive = false;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                btn.textContent = 'Air Down';
+            });
+    }
+}
+
+// Check Air Up status periodically
+function checkAirUpStatus() {
+    if (!airUpActive) return;
+    
+    fetch('/air_up?action=status', {method: 'GET'})
+        .then(response => response.json())
+        .then(data => {
+            const btn = document.querySelector('.air-up');
+            if (data.status === 'running') {
+                // Still running, check again in 1 second
+                setTimeout(checkAirUpStatus, 1000);
+            } else {
+                // Completed or cancelled
+                airUpActive = false;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                btn.textContent = 'Air Up';
+            }
+        });
+}
+
+// Check Air Down status periodically
+function checkAirDownStatus() {
+    if (!airDownActive) return;
+    
+    fetch('/air_down?action=status', {method: 'GET'})
+        .then(response => response.json())
+        .then(data => {
+            const btn = document.querySelector('.air-down');
+            if (data.status === 'running') {
+                // Still running, check again in 1 second
+                setTimeout(checkAirDownStatus, 1000);
+            } else {
+                // Completed or cancelled
+                airDownActive = false;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                btn.textContent = 'Air Down';
+            }
+        });
 }
 
 // Initialize the app
