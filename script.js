@@ -41,6 +41,17 @@ function saveSetpoints() {
 // Air Up with visual feedback and cancellation
 function airUp() {
     const btn = document.querySelector('.air-up');
+    
+    // Don't allow Air Up if Air Down is active
+    if (airDownActive) {
+        // Optional: flash or highlight the Air Down button to show it's blocking
+        const downBtn = document.querySelector('.air-down');
+        const originalBg = downBtn.style.backgroundColor;
+        downBtn.style.backgroundColor = '#fecaca'; // light red
+        setTimeout(() => { downBtn.style.backgroundColor = originalBg; }, 300);
+        return; // Do nothing else
+    }
+    
     if (!airUpActive) {
         // Start operation
         btn.style.backgroundColor = '#bae6fd';
@@ -77,6 +88,17 @@ function airUp() {
 // Air Down with visual feedback and cancellation
 function airDown() {
     const btn = document.querySelector('.air-down');
+    
+    // Don't allow Air Down if Air Up is active
+    if (airUpActive) {
+        // Optional: flash or highlight the Air Up button to show it's blocking
+        const upBtn = document.querySelector('.air-up');
+        const originalBg = upBtn.style.backgroundColor;
+        upBtn.style.backgroundColor = '#fecaca'; // light red
+        setTimeout(() => { upBtn.style.backgroundColor = originalBg; }, 300);
+        return; // Do nothing else
+    }
+    
     if (!airDownActive) {
         // Start operation
         btn.style.backgroundColor = '#bae6fd';
