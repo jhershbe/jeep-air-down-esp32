@@ -3,8 +3,6 @@
 import network
 import time
 import machine
-from microdot import Microdot, Response
-import uasyncio as asyncio
 import ujson
 
 # Setpoint persistence helpers
@@ -23,10 +21,6 @@ def save_setpoints(s_onroad, s_offroad):
     with open(SETPOINTS_FILE, 'w') as f:
         ujson.dump({'setpoint_onroad': float(s_onroad), 'setpoint_offroad': float(s_offroad)}, f)
 
-# Set up Microdot
-app = Microdot()
-Response.default_content_type = 'application/json'
-
 # Pin definitions (customize as needed)
 relay_pins = [12, 13, 14, 25]
 relay_outputs = [machine.Pin(pin, machine.Pin.OUT) for pin in relay_pins]
@@ -42,6 +36,14 @@ ap.config(essid='ESP32-AirCtrl', password='esp32pass', authmode=network.AUTH_WPA
 while not ap.active():
     time.sleep(0.1)
 print('AP active, IP:', ap.ifconfig()[0])
+
+# Now import Microdot and asyncio (after WiFi is initialized)
+from microdot import Microdot, Response
+import uasyncio as asyncio
+
+# Set up Microdot
+app = Microdot()
+Response.default_content_type = 'application/json'
 
 # Simple captive portal handler
 @app.route('/')
