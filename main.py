@@ -282,6 +282,48 @@ def read_pressure():
         pres_psi = 0.0
     return pres_psi
 
+async def wait_for_stable_pressure(max_wait_time=5.0, stability_threshold=0.5):
+    """Wait for pressure reading to stabilize, returning stable pressure value
+    
+    Args:
+        max_wait_time: Maximum time to wait in seconds
+        stability_threshold: Consider stable if change is less than this in PSI
+        
+    Returns:
+        Stable pressure reading
+    """
+    start_time = time.time()
+    last_pressure = read_pressure()
+    last_check_time = start_time
+    
+    # Initial reading
+    await asyncio.sleep(0.2)
+    
+    while True:
+        current_time = time.time()
+        elapsed = current_time - start_time
+        
+        # Don't wait longer than max_wait_time
+        if elapsed >= max_wait_time:
+            return read_pressure()
+        
+        # Check every 250ms
+        if current_time - last_check_time >= 0.25:
+            current_pressure = read_pressure()
+            time_diff = current_time - last_check_time
+            pressure_change_rate = abs(current_pressure - last_pressure) / time_diff
+            
+            # If change rate is less than threshold PSI per second, consider stable
+            if pressure_change_rate < stability_threshold:
+                return current_pressure
+            
+            # Update for next check
+            last_pressure = current_pressure
+            last_check_time = current_time
+        
+        # Yield to other tasks briefly
+        await asyncio.sleep(0.1)
+
 @app.route('/pressure')
 def get_pressure(request):
     """API endpoint for pressure reading"""
@@ -337,7 +379,7 @@ async def adjust_pressure(cmd, target_psi):
     if 'observed_rate' not in command_state[cmd]:
         command_state[cmd]['observed_rate'] = None
     if 'last_pressure' not in command_state[cmd]:
-        command_state[cmd]['last_pressure'] = read_pressure()
+        command_state[cmd]['last_pressure'] = await wait_for_stable_pressure()
     if 'last_valve_time' not in command_state[cmd]:
         command_state[cmd]['last_valve_time'] = 0.5  # Start conservative
     if 'last_action_time' not in command_state[cmd]:
@@ -348,8 +390,9 @@ async def adjust_pressure(cmd, target_psi):
     
     # Continue until cancelled or command_state is marked as not running
     while command_state[cmd]['running'] and not command_state[cmd]['cancel']:
-        # Read current pressure
-        current_psi = read_pressure()
+        # Get stable pressure reading (important for accurate learning)
+        print("Waiting for pressure to stabilize...")
+        current_psi = await wait_for_stable_pressure(max_wait_time=3.0)
         pressure_diff = target_psi - current_psi
         current_time = time.time()
         
@@ -424,9 +467,8 @@ async def adjust_pressure(cmd, target_psi):
             await asyncio.sleep(valve_time)
             vent_air_relay.value(0)  # Close vent valve
         
-        # Wait between adjustments - longer wait if we just made a big adjustment
-        wait_time = max(ADJUSTMENT_INTERVAL, valve_time * 2)
-        await asyncio.sleep(wait_time)
+        # No additional waiting needed - the wait_for_stable_pressure call
+        # at the beginning of the loop already ensures adequate settling time
 
 async def check_command_status():
     """Background task that monitors command state"""
