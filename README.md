@@ -1,6 +1,3 @@
-
-
-
 # Jeep Air Down Web Interface
 
 Jeep Air Down is an ESP32-based project for automatically managing the tire pressure of an off-road vehicle. The ESP32 runs in access-point mode, creating its own WiFi network and serving a mobile-friendly web interface for real-time control and monitoring.
@@ -11,7 +8,73 @@ Jeep Air Down is an ESP32-based project for automatically managing the tire pres
 - Another solenoid vents air from the tires (for airing down).
 - The user connects the tires to the system, sets the desired pressures, and the system automatically adjusts each tire, freeing the user to focus on other tasks.
 
-A wiring diagram will be included later.
+# Hardware Overview
+
+This project uses the following hardware components:
+
+- **ESP32 Development Board** ([Amazon link](https://www.amazon.com/dp/B0D5D7Q42V))
+  - "ESP32 Development Board Max V1.0 Compatible with Arduino, USB-C, Wi-Fi, Bluetooth, MicroPython Compatible, Single Board Computer Suitable for Building Mini PC/Smart Robot/Game Console (QA009)"
+- **Relay Shield** ([Amazon link](https://www.amazon.com/dp/B07F7Y55Z7))
+  - "HiLetgo 5V 4 Channel Relay Shield for UNO R3"
+- **Pneumatic Solenoid Valves** ([Amazon link](https://www.amazon.com/dp/B087T56KQN))
+  - "1/4" NPT Brass Electric Solenoid Valve 12V DC Normally Closed VITON (Standard USA Pipe Thread). Solid Brass, Direct Acting, Viton Gasket Solenoid Valve by AOMAG"
+- **Pressure Sensor** ([Amazon link](https://www.amazon.com/dp/B00NIK900K))
+  - "200 Psi Pressure Transducer Sender Sensor with Connector Harness 1/8-27 NPT Thread Stainless Steel Fuel Pressure Sensors Compatible with Oil Fuel Air Water Diesel Gas"
+
+**System Topology:**
+
+- The ESP32 board runs the control software and hosts the WiFi web interface.
+- The relay shield is connected to the ESP32 and controls the 12V pneumatic solenoid valves:
+  - One relay/solenoid connects the tires to a compressed air source (for airing up).
+  - Another relay/solenoid vents air from the tires (for airing down).
+- The pressure sensor is plumbed into the air line to measure the current tire pressure and is connected to an analog input on the ESP32.
+- The user connects all four tires to the system via hoses and can control the process from their phone or computer.
+
+---
+
+## Wiring Diagram
+
+Below is a simplified wiring diagram showing the main connections between the ESP32, relay shield, solenoids, and pressure sensor:
+
+```
+         +--------------------------------+
+         |   12V Power In (Barrel Jack)   |
+         +--------------------------------+
+                  |
+                  |
+        +---------------------+
+        |   ESP32 Board       |
+        |  (B0D5D7Q42V)       |
+        +---------------------+
+         |   |   |   |   |
+         |   |   |   |   +----5V from ESP32  ---------+
+         |   |   |   |                                |
+         |   |   |   +-- GPIO32 (Analog0) <---+-------------------+
+         |   |   |                            | Pressure Sensor   |
+         |   |   +-- GPIO25 (Relay 4)         +-------------------+
+         |   +------ GPIO14 (Relay 3)
+         +---------- GPIO13 (Relay 2) --+-- NO2 on Relay Shield (Vent Solenoid) --+
+         +---------- GPIO12 (Relay 1) --+-- NO1 on Relay Shield (Fill Solenoid) --+-- GND
+         |
+         +----------+-- Relay Shield V_in (jumpered to relay commons (COM1 & COM2))
+
+Relay Shield NO1  --> Fill Solenoid (+)
+Relay Shield NO2  --> Vent Solenoid (+)
+Solenoid (-)      --> Relay Shield GND
+
+Pressure Sensor V+ --> 5V on ESP32
+Pressure Sensor GND --> GND on ESP32
+Pressure Sensor Signal --> GPIO32 (A0)
+```
+
+**Description:**
+
+- The ESP32 is powered by a 12V supply via the barrel jack, which also powers the relay shield and solenoids.
+- The relay shield receives control signals from the ESP32 (GPIO12, 13, 14, 25), but only relays 1 and 2 are used for fill and vent solenoids.
+- The relay shield's V_in is connected to 12V and jumpered to the common terminals of relays 1 and 2, allowing the NO (normally open) contacts to switch 12V to the solenoids.
+- The solenoids' other wire is connected to relay shield GND.
+- The pressure sensor is powered from the ESP32's 5V output, with its signal connected to analog input GPIO32 (A0).
+- The user connects the system to all four tires via hoses; the ESP32 web interface controls the relays to air up or down as needed.
 
 ---
 
