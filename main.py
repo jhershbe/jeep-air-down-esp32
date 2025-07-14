@@ -63,6 +63,7 @@ def index(request):
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-title' content='ESP32 AirCtrl'>
+    <link rel='apple-touch-icon' href='/icon.png'>
     <link rel='stylesheet' href='/style.css'>
 </head>
 <body>
@@ -354,6 +355,13 @@ def script_js(request):
     with open('script.js') as f:
         js = f.read()
     return Response(body=js, headers={'Content-Type': 'application/javascript'})
+
+# Serve icon.png as the iOS home screen icon
+@app.route('/icon.png')
+def icon(request):
+    with open('icon.png', 'rb') as f:
+        icon = f.read()
+    return Response(body=icon, headers={'Content-Type': 'image/png'})
 
 # Catch-all: serve the captive portal page for all unknown URLs
 @app.route('/<path:path>')
