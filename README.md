@@ -1,11 +1,12 @@
-# ESP32 Air Pressure Web Interface
+
+# Jeep Air Down Web Interface
 
 This project provides a simple web-based interface for controlling and monitoring an air pressure system using an ESP32 running MicroPython and Microdot. The ESP32 acts as a WiFi access point and serves a mobile-friendly web app for real-time pressure readings.
 
 ---
 
 ## Features
-- ESP32 runs as a WiFi access point (default SSID: `ESP32-AirCtrl`, password: `esp32pass`)
+- ESP32 runs as a WiFi access point (default SSID: `JeepAirDown`, password: `emptyEveryPocket`)
 - Real-time air pressure sensor readings via web interface
 - Designed for easy use on iOS and Android devices
 - Can be added to your phone's home screen as a web app
@@ -52,7 +53,7 @@ The default setpoints for "On Road" and "Off Road" are stored in `setpoints.json
   ```
 
 ### 5. Connect to the Web Interface
-- On your phone, go to WiFi settings and connect to `ESP32-AirCtrl` (password: `esp32pass`).
+- On your phone, go to WiFi settings and connect to `JeepAirDown` (password: `emptyEveryPocket`).
 - Open Safari or Chrome and visit: [http://192.168.4.1](http://192.168.4.1)
 - The web interface should load and display the current pressure.
 
@@ -79,7 +80,7 @@ The default setpoints for "On Road" and "Off Road" are stored in `setpoints.json
 The HTML page served by the ESP32 includes the following meta tags for a better mobile experience:
 ```html
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ESP32 AirCtrl">
+<meta name="apple-mobile-web-app-title" content="Jeep Air Down">
 ```
 You can further customize the appearance by serving a custom icon as `/icon.png` (optional).
 

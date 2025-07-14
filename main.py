@@ -32,7 +32,7 @@ pressure_adc.atten(machine.ADC.ATTN_11DB)
 # WiFi Access Point Setup
 ap = network.WLAN(network.AP_IF)
 ap.active(True)
-ap.config(essid='ESP32-AirCtrl', password='esp32pass', authmode=network.AUTH_WPA_WPA2_PSK)
+ap.config(essid='JeepAirDown', password='emptyEveryPocket', authmode=network.AUTH_WPA_WPA2_PSK)
 
 # Wait for AP to be active
 while not ap.active():
@@ -59,10 +59,10 @@ def index(request):
     return Response(body="""
 <html>
 <head>
-    <title>ESP32 Air Control</title>
+    <title>Jeep Air Down</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
-    <meta name='apple-mobile-web-app-title' content='ESP32 AirCtrl'>
+    <meta name='apple-mobile-web-app-title' content='Jeep Air Down'>
     <link rel='apple-touch-icon' href='/icon.png'>
     <link rel='stylesheet' href='/style.css'>
 </head>
