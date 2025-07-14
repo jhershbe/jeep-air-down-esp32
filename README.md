@@ -1,7 +1,17 @@
 
+
+
 # Jeep Air Down Web Interface
 
-This project provides a simple web-based interface for controlling and monitoring an air pressure system using an ESP32 running MicroPython and Microdot. The ESP32 acts as a WiFi access point and serves a mobile-friendly web app for real-time pressure readings.
+Jeep Air Down is an ESP32-based project for automatically managing the tire pressure of an off-road vehicle. The ESP32 runs in access-point mode, creating its own WiFi network and serving a mobile-friendly web interface for real-time control and monitoring.
+
+**How it works:**
+- A pressure sensor measures the tire pressure through the fill hoses.
+- One solenoid valve connects the tires to a compressed air source (for airing up).
+- Another solenoid vents air from the tires (for airing down).
+- The user connects the tires to the system, sets the desired pressures, and the system automatically adjusts each tire, freeing the user to focus on other tasks.
+
+A wiring diagram will be included later.
 
 ---
 
