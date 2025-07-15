@@ -58,7 +58,6 @@ async def monitor_buttons():
                     print("Cancelling Air Up command via button press")
                     command_state['air_up']['cancel'] = True
                     command_state['air_up']['running'] = False
-                    command_state['air_up']['status'] = 'cancelled'
                 else:
                     # Start air_up if not running
                     s_onroad, _ = load_setpoints()
@@ -68,7 +67,6 @@ async def monitor_buttons():
                     command_state['air_up']['start_time'] = time.time()
                     last_command_time['air_up'] = time.time()
                     command_state['air_up']['target_psi'] = target_psi
-                    command_state['air_up']['status'] = 'started'
                     asyncio.create_task(adjust_pressure('air_up', target_psi))
                 # Wait for release to avoid retrigger
                 while air_up_button.value() == 0:
@@ -89,7 +87,6 @@ async def monitor_buttons():
                     print("Cancelling Air Down command via button press")
                     command_state['air_down']['cancel'] = True
                     command_state['air_down']['running'] = False
-                    command_state['air_down']['status'] = 'cancelled'
                 else:
                     # Start air_down if not running
                     _, s_offroad = load_setpoints()
@@ -99,7 +96,6 @@ async def monitor_buttons():
                     command_state['air_down']['start_time'] = time.time()
                     last_command_time['air_down'] = time.time()
                     command_state['air_down']['target_psi'] = target_psi
-                    command_state['air_down']['status'] = 'started'
                     asyncio.create_task(adjust_pressure('air_down', target_psi))
                 # Wait for release to avoid retrigger
                 while air_down_button.value() == 0:
@@ -126,12 +122,6 @@ import uasyncio as asyncio
 # Set up Microdot
 app = Microdot()
 Response.default_content_type = 'application/json'
-
-# --- Command state tracking dictionary ---
-command_state = {
-    'air_up': {'running': False, 'cancel': False, 'task': None},
-    'air_down': {'running': False, 'cancel': False, 'task': None}
-}
 
 # Simple captive portal handler
 @app.route('/')
@@ -241,11 +231,6 @@ def air_up(request):
             command_state[cmd]['cancel'] = True
             command_state[cmd]['running'] = False
             
-            # Deactivate hardware
-            print(f"{cmd} cancelled")
-            # TODO: Add hardware control
-            # compressed_air_relay.value(0)  # Turn off air compressor relay
-            
             # Clean up timers
             if cmd in last_command_time:
                 del last_command_time[cmd]
@@ -321,11 +306,6 @@ def air_down(request):
         if command_state[cmd]['running']:
             command_state[cmd]['cancel'] = True
             command_state[cmd]['running'] = False
-            
-            # Deactivate hardware
-            print(f"{cmd} cancelled")
-            # TODO: Add hardware control
-            # vent_air_relay.value(0)  # Turn off release valve relay
             
             # Clean up timers
             if cmd in last_command_time:
