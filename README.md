@@ -36,6 +36,7 @@ This project uses the following hardware components:
 
 Below is a simplified wiring diagram showing the main connections between the ESP32, relay shield, solenoids, and pressure sensor:
 
+
 ```
          +--------------------------------+
          |   12V Power In (Barrel Jack)   |
@@ -46,13 +47,15 @@ Below is a simplified wiring diagram showing the main connections between the ES
         |   ESP32 Board       |
         |  (B0D5D7Q42V)       |
         +---------------------+
-         |   |   |   |   |
-         |   |   |   |   +----5V from ESP32  ---------+
-         |   |   |   |                                |
-         |   |   |   +-- GPIO32 (Analog0) <---+-------------------+
-         |   |   |                            | Pressure Sensor   |
-         |   |   +-- GPIO25 (Relay 4)         +-------------------+
-         |   +------ GPIO14 (Relay 3)
+         |   |   |   |   |   |
+         |   |   |   |   |   +-- GPIO5  <---+---[Button: Air Up]---+--- GND
+         |   |   |   |   +------- GPIO16 <---+---[Button: Air Down]-+--- GND
+         |   |   |   +----5V from ESP32  ---------+
+         |   |   |                                |
+         |   |   +-- GPIO32 (Analog0) <---+-------------------+
+         |   |                            | Pressure Sensor   |
+         |   +-- GPIO25 (Relay 4)         +-------------------+
+         +------ GPIO14 (Relay 3)
          +---------- GPIO13 (Relay 2) --+-- NO2 on Relay Shield (Vent Solenoid) --+
          +---------- GPIO12 (Relay 1) --+-- NO1 on Relay Shield (Fill Solenoid) --+-- GND
          |
@@ -62,9 +65,12 @@ Relay Shield NO1  --> Fill Solenoid (+)
 Relay Shield NO2  --> Vent Solenoid (+)
 Solenoid (-)      --> Relay Shield GND
 
-Pressure Sensor V+ --> 5V on ESP32
-Pressure Sensor GND --> GND on ESP32
+Pressure Sensor V+     --> 5V on ESP32
+Pressure Sensor GND    --> GND on ESP32
 Pressure Sensor Signal --> GPIO32 (A0)
+
+Air Up Button:   GPIO5  <---+---[Button]---+--- GND
+Air Down Button: GPIO16 <---+---[Button]---+--- GND
 ```
 
 **Description:**
@@ -74,7 +80,10 @@ Pressure Sensor Signal --> GPIO32 (A0)
 - The relay shield's V_in is connected to 12V and jumpered to the common terminals of relays 1 and 2, allowing the NO (normally open) contacts to switch 12V to the solenoids.
 - The solenoids' other wire is connected to relay shield GND.
 - The pressure sensor is powered from the ESP32's 5V output, with its signal connected to analog input GPIO32 (A0).
-- The user connects the system to all four tires via hoses; the ESP32 web interface controls the relays to air up or down as needed.
+- **Two pushbuttons are connected to the ESP32 for manual control:**
+  - Air Up Button: Connect one side to GPIO5, the other to GND (active low, internal pull-up enabled)
+  - Air Down Button: Connect one side to GPIO16, the other to GND (active low, internal pull-up enabled)
+- The user connects the system to all four tires via hoses; the ESP32 web interface and/or physical buttons control the relays to air up or down as needed.
 
 ---
 

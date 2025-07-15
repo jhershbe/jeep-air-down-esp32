@@ -29,6 +29,86 @@ vent_air_relay = relay_outputs[1]
 pressure_adc = machine.ADC(machine.Pin(32))
 pressure_adc.atten(machine.ADC.ATTN_11DB)
 
+# Digital inputs for buttons (active low, pull-up enabled)
+air_up_button = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
+air_down_button = machine.Pin(16, machine.Pin.IN, machine.Pin.PULL_UP)
+# --- Button monitoring task ---
+async def monitor_buttons():
+    debounce_ms = 50
+    last_up = 1
+    last_down = 1
+    up_pressed_time = 0
+    down_pressed_time = 0
+    while True:
+        up_val = air_up_button.value()
+        down_val = air_down_button.value()
+
+        # Debounce air up button
+        if up_val == 0 and last_up == 1:
+            up_pressed_time = time.ticks_ms()
+        if up_val == 0 and last_up == 0:
+            if time.ticks_diff(time.ticks_ms(), up_pressed_time) > debounce_ms:
+                # Button is debounced and pressed
+                print("Air Up button pressed")
+                if command_state['air_down']['running']:
+                    # Ignore if air_down is running
+                    pass
+                elif command_state['air_up']['running']:
+                    # Cancel air_up if running
+                    print("Cancelling Air Up command via button press")
+                    command_state['air_up']['cancel'] = True
+                    command_state['air_up']['running'] = False
+                    command_state['air_up']['status'] = 'cancelled'
+                else:
+                    # Start air_up if not running
+                    s_onroad, _ = load_setpoints()
+                    target_psi = float(s_onroad)
+                    command_state['air_up']['running'] = True
+                    command_state['air_up']['cancel'] = False
+                    command_state['air_up']['start_time'] = time.time()
+                    last_command_time['air_up'] = time.time()
+                    command_state['air_up']['target_psi'] = target_psi
+                    command_state['air_up']['status'] = 'started'
+                    asyncio.create_task(adjust_pressure('air_up', target_psi))
+                # Wait for release to avoid retrigger
+                while air_up_button.value() == 0:
+                    await asyncio.sleep_ms(10)
+
+        # Debounce air down button
+        if down_val == 0 and last_down == 1:
+            down_pressed_time = time.ticks_ms()
+        if down_val == 0 and last_down == 0:
+            if time.ticks_diff(time.ticks_ms(), down_pressed_time) > debounce_ms:
+                # Button is debounced and pressed
+                print("Air Down button pressed")
+                if command_state['air_up']['running']:
+                    # Ignore if air_up is running
+                    pass
+                elif command_state['air_down']['running']:
+                    # Cancel air_down if running
+                    print("Cancelling Air Down command via button press")
+                    command_state['air_down']['cancel'] = True
+                    command_state['air_down']['running'] = False
+                    command_state['air_down']['status'] = 'cancelled'
+                else:
+                    # Start air_down if not running
+                    _, s_offroad = load_setpoints()
+                    target_psi = float(s_offroad)
+                    command_state['air_down']['running'] = True
+                    command_state['air_down']['cancel'] = False
+                    command_state['air_down']['start_time'] = time.time()
+                    last_command_time['air_down'] = time.time()
+                    command_state['air_down']['target_psi'] = target_psi
+                    command_state['air_down']['status'] = 'started'
+                    asyncio.create_task(adjust_pressure('air_down', target_psi))
+                # Wait for release to avoid retrigger
+                while air_down_button.value() == 0:
+                    await asyncio.sleep_ms(10)
+
+        last_up = up_val
+        last_down = down_val
+        await asyncio.sleep_ms(10)
+
 # WiFi Access Point Setup
 ap = network.WLAN(network.AP_IF)
 ap.active(True)
@@ -560,6 +640,8 @@ async def main():
     print('Starting Microdot server (asyncio mode)...')
     # Start the command status checker in the background
     asyncio.create_task(check_command_status())
+    # Start the button monitor in the background
+    asyncio.create_task(monitor_buttons())
     # Start the server
     await app.start_server(host='0.0.0.0', port=80)
 
