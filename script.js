@@ -1,6 +1,10 @@
-// Command state for Air Up/Down
+// Command state for Air Up/Down (local UI state)
 let airUpActive = false;
 let airDownActive = false;
+
+// Track expected states to prevent flicker from slow status updates
+let airUpExpectedState = 'live';
+let airDownExpectedState = 'live';
 
 // Refresh pressure reading
 function refreshPressure() {
@@ -38,49 +42,92 @@ function saveSetpoints() {
     });
 }
 
-// Air Up with visual feedback and cancellation
-function airUp() {
-    const btn = document.querySelector('.air-up');
-    
-    // Don't allow Air Up if Air Down is active
-    if (airDownActive) {
-        // Optional: flash or highlight the Air Down button to show it's blocking
-        const downBtn = document.querySelector('.air-down');
-        const originalBg = downBtn.style.backgroundColor;
-        downBtn.style.backgroundColor = '#fecaca'; // light red
-        setTimeout(() => { downBtn.style.backgroundColor = originalBg; }, 300);
-        return; // Do nothing else
-    }
-    
-    if (!airUpActive) {
-        // Start operation
+// Apply button visual changes immediately
+function updateButtonVisuals(btn, state, elapsed) {
+    if (state === 'idle') {
+        btn.textContent = btn.classList.contains('air-up') ? 'Air Up' : 'Air Down';
+        btn.style.backgroundColor = '';
+        btn.style.color = '';
+        btn.disabled = false;
+    } else if (state === 'starting') {
+        btn.textContent = btn.classList.contains('air-up') ? 'Air Up...' : 'Air Down...';
+        btn.style.backgroundColor = '';
+        btn.style.color = '';
+        btn.disabled = true;
+    } else if (state === 'running') {
+        const timeText = elapsed !== undefined ? `Cancel (${elapsed.toFixed(0)}s)` : 'Cancel';
+        btn.textContent = timeText;
+        btn.style.backgroundColor = '#bae6fd';
+        btn.style.color = '#2563eb';
+        btn.disabled = false;
+    } else if (state === 'cancelling') {
+        btn.textContent = 'Cancelling...';
         btn.style.backgroundColor = '#bae6fd';
         btn.style.color = '#2563eb';
         btn.disabled = true;
-        
+    } else if (state === 'blocked') {
+        btn.style.backgroundColor = '#fecaca';
+        setTimeout(() => { btn.style.backgroundColor = ''; }, 300);
+    }
+}
+
+// Set button state with flicker prevention
+function setButtonState(btn, state, elapsed, source) {
+    const isAirUp = btn.classList.contains('air-up');
+    const currentExpected = isAirUp ? airUpExpectedState : airDownExpectedState;
+
+    if (source === 'click') {
+        // Update immediately and set expected state
+        if (isAirUp) {
+            airUpExpectedState = state;
+        } else {
+            airDownExpectedState = state;
+        }
+        if (state === 'running') {
+            temp_state = 'starting';
+        } else if (state === 'idle') {
+            temp_state = 'cancelling';
+        } else {
+            temp_state = state;
+        }
+        updateButtonVisuals(btn, temp_state, elapsed);
+    } else if (source === 'status' && currentExpected !== 'live') {
+        // Only update if status matches expected state or if we're not expecting anything
+        if (state === currentExpected) {
+            updateButtonVisuals(btn, state, elapsed);
+            // Clear expected state when status catches up
+            if (isAirUp) {
+                airUpExpectedState = 'live';
+            } else {
+                airDownExpectedState = 'live';
+            }
+        }
+    } else {
+        // Default behavior when live
+        updateButtonVisuals(btn, state, elapsed);
+    }
+}
+
+// Air Up with visual feedback and cancellation
+function airUp() {
+    const btn = document.querySelector('.air-up');
+    if (airDownActive) {
+        setButtonState(btn, 'blocked', undefined, 'click');
+        return;
+    }
+    if (!airUpActive) {
+        // Start operation - update UI immediately
+        setButtonState(btn, 'running', 0, 'click');
         fetch('/air_up?action=start', {method: 'POST'})
             .then(response => response.json())
             .then(data => {
-                if (data.status === 'started' || data.status === 'already_running') {
-                    airUpActive = true;
-                    btn.disabled = false;
-                    btn.textContent = 'Cancel (0.0s)'; // Set initial timer text
-                    checkAirUpStatus();
-                } else {
-                    btn.style.backgroundColor = '';
-                    btn.style.color = '';
-                    btn.disabled = false;
-                }
             });
     } else {
-        // Cancel operation
+        // Cancel operation - update UI immediately
+        setButtonState(btn, 'idle', undefined, 'click');
         fetch('/air_up?action=cancel', {method: 'POST'})
             .then(response => response.json())
             .then(data => {
-                airUpActive = false;
-                btn.style.backgroundColor = '';
-                btn.style.color = '';
-                btn.textContent = 'Air Up';
             });
     }
 }
@@ -88,109 +135,53 @@ function airUp() {
 // Air Down with visual feedback and cancellation
 function airDown() {
     const btn = document.querySelector('.air-down');
-    
-    // Don't allow Air Down if Air Up is active
     if (airUpActive) {
-        // Optional: flash or highlight the Air Up button to show it's blocking
-        const upBtn = document.querySelector('.air-up');
-        const originalBg = upBtn.style.backgroundColor;
-        upBtn.style.backgroundColor = '#fecaca'; // light red
-        setTimeout(() => { upBtn.style.backgroundColor = originalBg; }, 300);
-        return; // Do nothing else
+        setButtonState(btn, 'blocked', undefined, 'click');
+        return;
     }
-    
     if (!airDownActive) {
-        // Start operation
-        btn.style.backgroundColor = '#bae6fd';
-        btn.style.color = '#2563eb';
-        btn.disabled = true;
-        
+        // Start operation - update UI immediately
+        setButtonState(btn, 'running', 0, 'click');
         fetch('/air_down?action=start', {method: 'POST'})
             .then(response => response.json())
             .then(data => {
-                if (data.status === 'started' || data.status === 'already_running') {
-                    airDownActive = true;
-                    btn.disabled = false;
-                    btn.textContent = 'Cancel (0.0s)'; // Set initial timer text
-                    checkAirDownStatus();
-                } else {
-                    // Error or other status
-                    btn.style.backgroundColor = '';
-                    btn.style.color = '';
-                    btn.disabled = false;
-                }
             });
     } else {
-        // Cancel operation
+        // Cancel operation - update UI immediately
+        setButtonState(btn, 'idle', undefined, 'click');
         fetch('/air_down?action=cancel', {method: 'POST'})
             .then(response => response.json())
             .then(data => {
-                airDownActive = false;
-                btn.style.backgroundColor = '';
-                btn.style.color = '';
-                btn.textContent = 'Air Down';
             });
     }
 }
 
-// Check Air Up status periodically
-function checkAirUpStatus() {
-    if (!airUpActive) return;
-    
+// Poll firmware status when both commands are idle
+function pollFirmwareStatus() {
     fetch('/air_up?action=status', {method: 'GET'})
         .then(response => response.json())
         .then(data => {
             const btn = document.querySelector('.air-up');
             if (data.status === 'running') {
-                // Get elapsed time from API response (already calculated on server)
+                airUpActive = true;
                 const elapsedTime = data.time || 0;
-                const formattedTime = elapsedTime.toFixed(1);
-                
-                // Update button text with elapsed time
-                btn.textContent = `Cancel (${formattedTime}s)`;
-                
-                // Simple static highlight color for active state
-                btn.style.backgroundColor = '#bae6fd'; // Light blue
-                
-                // Use 1000ms refresh to avoid overwhelming the ESP32
-                setTimeout(checkAirUpStatus, 1000);
+                setButtonState(btn, 'running', elapsedTime, 'status');
             } else {
-                // Completed or cancelled
                 airUpActive = false;
-                btn.style.backgroundColor = '';
-                btn.style.color = '';
-                btn.textContent = 'Air Up'; // Restore button text
+                setButtonState(btn, 'idle', undefined, 'status');
             }
         });
-}
-
-// Check Air Down status periodically
-function checkAirDownStatus() {
-    if (!airDownActive) return;
-    
     fetch('/air_down?action=status', {method: 'GET'})
         .then(response => response.json())
         .then(data => {
             const btn = document.querySelector('.air-down');
             if (data.status === 'running') {
-                // Get elapsed time from API response (already calculated on server)
+                airDownActive = true;
                 const elapsedTime = data.time || 0;
-                const formattedTime = elapsedTime.toFixed(1);
-                
-                // Update button text with elapsed time
-                btn.textContent = `Cancel (${formattedTime}s)`;
-                
-                // Simple static highlight color for active state
-                btn.style.backgroundColor = '#bae6fd'; // Light blue
-                
-                // Use 1000ms refresh to avoid overwhelming the ESP32
-                setTimeout(checkAirDownStatus, 1000);
+                setButtonState(btn, 'running', elapsedTime, 'status');
             } else {
-                // Completed or cancelled
                 airDownActive = false;
-                btn.style.backgroundColor = '';
-                btn.style.color = '';
-                btn.textContent = 'Air Down'; // Restore button text
+                setButtonState(btn, 'idle', undefined, 'status');
             }
         });
 }
@@ -199,6 +190,7 @@ function checkAirDownStatus() {
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-refresh pressure every 1000ms to avoid overwhelming the ESP32
     setInterval(refreshPressure, 1000);
+    setInterval(pollFirmwareStatus, 1000);
     refreshPressure();
     loadSetpoints();
 });
