@@ -45,7 +45,7 @@ function saveSetpoints() {
 // Apply button visual changes immediately
 function updateButtonVisuals(btn, state, elapsed) {
     if (state === 'idle') {
-        btn.textContent = btn.classList.contains('air-up') ? 'Air Up to ' + d.setpoint_onroad + ' PSI' : 'Air Down to ' + d.setpoint_offroad + ' PSI';
+        btn.textContent = btn.classList.contains('air-up') ? 'Air Up to ' + document.getElementById('setpoint_onroad').value + ' PSI' : 'Air Down to ' + document.getElementById('setpoint_offroad').value + ' PSI';
         btn.style.backgroundColor = '';
         btn.style.color = '';
         btn.disabled = false;
