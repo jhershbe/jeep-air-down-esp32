@@ -142,8 +142,8 @@ def index(request):
         <span class='pressure-value' id='pressure'>--</span>
         <span class='psi-label'>PSI</span>
         <div class='command-buttons'>
-            <button class='air-up' onclick='airUp()'>Air Up</button>
-            <button class='air-down' onclick='airDown()'>Air Down</button>
+            <button class='air-up' onclick='airUp()'>Air Up to {{ d.setpoint_onroad }} PSI</button>
+            <button class='air-down' onclick='airDown()'>Air Down to {{ d.setpoint_offroad }} PSI</button>
         </div>
         <div class='setpoints'>
             <span>
