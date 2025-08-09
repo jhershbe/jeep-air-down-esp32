@@ -138,7 +138,7 @@ def index(request):
 </head>
 <body>
     <div class='container'>
-        <h2>Air Pressure Sensor</h2>
+        <h2>Current Pressure</h2>
         <span class='pressure-value' id='pressure'>--</span>
         <span class='psi-label'>PSI</span>
         <div class='command-buttons'>
@@ -146,10 +146,14 @@ def index(request):
             <button class='air-down' onclick='airDown()'>Air Down</button>
         </div>
         <div class='setpoints'>
-            <label for='setpoint_onroad'>On Road (PSI):</label>
-            <input type='number' id='setpoint_onroad' min='0' max='300' step='0.1'>
-            <label for='setpoint_offroad'>Off Road (PSI):</label>
-            <input type='number' id='setpoint_offroad' min='0' max='300' step='0.1'>
+            <span>
+                <label for='setpoint_onroad'>On Road (PSI):</label>
+                <input type='number' id='setpoint_onroad' min='0' max='300' step='0.1'>
+            </span>
+            <span>
+                <label for='setpoint_offroad'>Off Road (PSI):</label>
+                <input type='number' id='setpoint_offroad' min='0' max='300' step='0.1'>
+            </span>
             <button class='save-setpoints' onclick='saveSetpoints()'>Save Setpoints</button>
         </div>
 

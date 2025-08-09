@@ -12,7 +12,7 @@ body {
     min-height: 100vh;
 }
 .container {
-    gap: 2em;
+    gap: 1.6em;
 
     background: #fff;
     border-radius: 18px;
@@ -43,7 +43,7 @@ h2 {
     display: block;
 }
 .setpoints {
-    margin: 2em 0 1.5em 0;
+    margin: 1.5em 0 1.2em 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -69,8 +69,8 @@ button {
     border: none;
     border-radius: 12px;
     font-size: 1em;
-    padding: 1em 2.5em;
-    margin-top: 1.8em;
+    padding: 1em 1.5em;
+    margin-top: 1.4em;
     cursor: pointer;
     transition: background 0.2s;
     box-shadow: 0 2px 8px rgba(37,99,235,0.12);
