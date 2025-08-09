@@ -24,12 +24,12 @@ body {
     text-align: center;
 }
 h2 {
-    font-size: 2.2em;
+    font-size: 1.2em;
     margin-bottom: 0.6em;
     color: #1a202c;
 }
 .pressure-value {
-    font-size: 5em;
+    font-size: 3em;
     font-weight: bold;
     color: #2563eb;
     margin-bottom: 0.3em;
@@ -37,9 +37,9 @@ h2 {
     letter-spacing: 0.04em;
 }
 .psi-label {
-    font-size: 1.2em;
+    font-size: .8em;
     color: #64748b;
-    margin-bottom: 1.2em;
+    margin-bottom: .8em;
     display: block;
 }
 .setpoints {
@@ -50,12 +50,12 @@ h2 {
     gap: 1em;
 }
 .setpoints label {
-    font-size: 1.1em;
+    font-size: .7em;
     color: #374151;
     margin-bottom: 0.2em;
 }
 .setpoints input[type='number'] {
-    font-size: 2em;
+    font-size: 1em;
     width: 120px;
     padding: 0.3em 0.6em;
     border-radius: 8px;
@@ -68,7 +68,7 @@ button {
     color: #fff;
     border: none;
     border-radius: 12px;
-    font-size: 2em;
+    font-size: 1em;
     padding: 1em 2.5em;
     margin-top: 1.8em;
     cursor: pointer;
