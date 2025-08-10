@@ -1,0 +1,36 @@
+<html>
+<head>
+    <title>Jeep Air Down</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta name='apple-mobile-web-app-capable' content='yes'>
+    <meta name='apple-mobile-web-app-title' content='Jeep Air Down'>
+    <link rel='apple-touch-icon' href='/icon.png'>
+    <link rel='stylesheet' href='/style.css'>
+</head>
+<body>
+    <div class='container' style='text-align: center;'>
+        <h2>System Pressure</h2>
+        <span class='pressure-value' id='pressure'>--</span>
+    </div>
+    <div class='container'>
+        <div class='command-buttons'>
+            <button class='air-up' onclick='airUp()'>Air Up to -- psi</button>
+            <button class='air-down' onclick='airDown()'>Air Down to -- psi</button>
+        </div>
+    </div>
+    <div class='container'>
+        <div class='setpoints'>
+            <span>
+                <label for='setpoint_onroad'>On Road (psi):</label>
+                <input type='number' id='setpoint_onroad' min='0' max='300' step='1'> 
+            </span>
+            <span>
+                <label for='setpoint_offroad'>Off Road (psi):</label>
+                <input type='number' id='setpoint_offroad' min='0' max='300' step='1'>
+            </span>
+            <button class='save-setpoints' onclick='saveSetpoints()'>Save Setpoints</button>
+        </div>
+    </div>
+    <script src='/script.js'></script>
+</body>
+</html>

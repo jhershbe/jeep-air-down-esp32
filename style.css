@@ -3,7 +3,7 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: #f8fafc;
+    background: #807f91;
 }
 body {
     display: flex;
@@ -15,12 +15,12 @@ body {
     gap: 1.6em;
 
     background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    padding: 1.2em 2em 2em 2em;
+    border-radius: 22px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.38);
+    padding: 1.2em, 1.2em;
     margin-top: 2em;
     max-width: 420px;
-    width: 95vw;
+    width: 93vw;
     text-align: center;
 }
 h2 {
@@ -31,10 +31,15 @@ h2 {
 .pressure-value {
     font-size: 3em;
     font-weight: bold;
+    text-align: right;
     color: #2563eb;
     margin-bottom: 0.3em;
     display: block;
     letter-spacing: 0.04em;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 2em,0em;
+    width: 50%;
 }
 .psi-label {
     font-size: .8em;
@@ -56,7 +61,7 @@ h2 {
 }
 .setpoints input[type='number'] {
     font-size: 1em;
-    width: 120px;
+    width: 60px;
     padding: 0.3em 0.6em;
     border-radius: 8px;
     border: 1px solid #cbd5e1;
@@ -70,7 +75,8 @@ button {
     border-radius: 12px;
     font-size: 1em;
     padding: 1em 1.5em;
-    margin-top: 1.4em;
+    margin-top: .7em;
+    margin-bottom: .7em;
     cursor: pointer;
     transition: background 0.2s;
     box-shadow: 0 2px 8px rgba(37,99,235,0.12);
@@ -81,5 +87,11 @@ button {
     margin-right: auto;
 }
 button:hover {
-    background: #1d4ed8;
+    background: #bababa;
+}
+button.air-up {
+    background: green;
+}
+button.air-down {
+    background: red;
 }

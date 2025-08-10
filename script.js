@@ -9,7 +9,7 @@ let airDownExpectedState = 'live';
 // Refresh pressure reading
 function refreshPressure() {
     fetch('/pressure').then(r => r.json()).then(d => {
-        document.getElementById('pressure').innerText = d.pressure;
+        document.getElementById('pressure').innerText = parseInt(d.pressure) + ' psi';
     });
 }
 
@@ -45,24 +45,24 @@ function saveSetpoints() {
 // Apply button visual changes immediately
 function updateButtonVisuals(btn, state, elapsed) {
     if (state === 'idle') {
-        btn.textContent = btn.classList.contains('air-up') ? 'Air Up to ' + document.getElementById('setpoint_onroad').value + ' PSI' : 'Air Down to ' + document.getElementById('setpoint_offroad').value + ' PSI';
+        btn.textContent = btn.classList.contains('air-up') ? 'Air Up to ' + document.getElementById('setpoint_onroad').value + ' psi' : 'Air Down to ' + document.getElementById('setpoint_offroad').value + ' psi';
         btn.style.backgroundColor = '';
         btn.style.color = '';
         btn.disabled = false;
     } else if (state === 'starting') {
-        btn.textContent = btn.classList.contains('air-up') ? 'Air Up...' : 'Air Down...';
+        btn.textContent = btn.classList.contains('air-up') ? 'Air Up to ' + document.getElementById('setpoint_onroad').value + ' psi' : 'Air Down to ' + document.getElementById('setpoint_offroad').value + ' psi';
         btn.style.backgroundColor = '';
         btn.style.color = '';
         btn.disabled = true;
     } else if (state === 'running') {
         const timeText = elapsed !== undefined ? `Cancel (${elapsed.toFixed(0)}s)` : 'Cancel';
         btn.textContent = timeText;
-        btn.style.backgroundColor = '#bae6fd';
+        btn.style.backgroundColor = btn.classList.contains('air-up') ? '#57E964' : '#CC0202'; // green for air up, red for air down
         btn.style.color = '#2563eb';
         btn.disabled = false;
     } else if (state === 'cancelling') {
         btn.textContent = 'Cancelling...';
-        btn.style.backgroundColor = '#bae6fd';
+        btn.style.backgroundColor = btn.classList.contains('air-up') ? '#57E964' : '#CC0202'; // green for air up, red for air down
         btn.style.color = '#2563eb';
         btn.disabled = true;
     } else if (state === 'blocked') {

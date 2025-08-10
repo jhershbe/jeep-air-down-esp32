@@ -123,45 +123,14 @@ import uasyncio as asyncio
 app = Microdot()
 Response.default_content_type = 'application/json'
 
+# Load HTML layout from template
+with open("/layout.html", "r") as f:
+    html_template = f.read()
+
 # Simple captive portal handler
 @app.route('/')
 def index(request):
-    return Response(body="""
-<html>
-<head>
-    <title>Jeep Air Down</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <meta name='apple-mobile-web-app-capable' content='yes'>
-    <meta name='apple-mobile-web-app-title' content='Jeep Air Down'>
-    <link rel='apple-touch-icon' href='/icon.png'>
-    <link rel='stylesheet' href='/style.css'>
-</head>
-<body>
-    <div class='container'>
-        <h2>Current Pressure</h2>
-        <span class='pressure-value' id='pressure'>--</span>
-        <span class='psi-label'>PSI</span>
-        <div class='command-buttons'>
-            <button class='air-up' onclick='airUp()'>Air Up to __ PSI</button>
-            <button class='air-down' onclick='airDown()'>Air Down to __ PSI</button>
-        </div>
-        <div class='setpoints'>
-            <span>
-                <label for='setpoint_onroad'>On Road (PSI):</label>
-                <input type='number' id='setpoint_onroad' min='0' max='300' step='0.1'>
-            </span>
-            <span>
-                <label for='setpoint_offroad'>Off Road (PSI):</label>
-                <input type='number' id='setpoint_offroad' min='0' max='300' step='0.1'>
-            </span>
-            <button class='save-setpoints' onclick='saveSetpoints()'>Save Setpoints</button>
-        </div>
-
-    </div>
-    <script src='/script.js'></script>
-</body>
-</html>
-""", headers={'Content-Type': 'text/html'})
+    return Response(body= html_template , headers={'Content-Type': 'text/html'})
 
 @app.route('/get_setpoints')
 def get_setpoints(request):
