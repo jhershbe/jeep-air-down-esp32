@@ -3,30 +3,33 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: #807f91;
+    background-image: url('./tire.jpeg');
 }
 body {
     display: flex;
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
+    background-color: black;
+    background-repeat:no-repeat;
+    background-position: center bottom;
+    background-attachment: fixed;
+    background-size: cover;
 }
 .container {
-    gap: 1.6em;
-
-    background: #fff;
-    border-radius: 22px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.38);
+    background: rgba(2, 2, 36, 0.77);
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.8);
     padding: 1.2em, 1.2em;
-    margin-top: 2em;
-    max-width: 420px;
-    width: 93vw;
+    margin-top: 1em;
+    max-width: 400px;
+    width: 91vw;
     text-align: center;
 }
 h2 {
     font-size: 1.2em;
     margin-bottom: 0.6em;
-    color: #1a202c;
+    color: #93b2e2;
 }
 .pressure-value {
     font-size: 3em;
@@ -36,8 +39,8 @@ h2 {
     margin-bottom: 0.3em;
     display: block;
     letter-spacing: 0.04em;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 1em;
+    margin-right:.4em;
     padding: 2em,0em;
     width: 50%;
 }
@@ -48,16 +51,15 @@ h2 {
     display: block;
 }
 .setpoints {
-    margin: 1.5em 0 1.2em 0;
-    display: flex;
+    margin: 1.1em 0 1.2em 0;
     flex-direction: column;
-    align-items: center;
-    gap: 1em;
+    display: flex;
+    gap: .5em
 }
 .setpoints label {
-    font-size: .7em;
-    color: #374151;
-    margin-bottom: 0.2em;
+    font-size: 1.1em;
+    color: #93b2e2;
+    margin: .2em -.5em .2em 1em;
 }
 .setpoints input[type='number'] {
     font-size: 1em;
@@ -66,32 +68,33 @@ h2 {
     border-radius: 8px;
     border: 1px solid #cbd5e1;
     text-align: center;
-    margin-bottom: 0.5em;
+    margin: .5em;
+
 }
 button {
-    background: #2563eb;
+    background: #1352da66;
     color: #fff;
     border: none;
-    border-radius: 12px;
-    font-size: 1em;
+    border-radius: 24px;
+    font-size: 1.2em;
     padding: 1em 1.5em;
-    margin-top: .7em;
-    margin-bottom: .7em;
     cursor: pointer;
     transition: background 0.2s;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.12);
-    min-width: 70vw;
-    max-width: 400px;
+    width:100%;
     display: block;
-    margin-left: auto;
-    margin-right: auto;
 }
 button:hover {
-    background: #bababa;
+  /* background: #1c1ac0; */
 }
 button.air-up {
-    background: green;
+    background: rgba(63, 163, 63, 0.5);
+}
+button.air-up:hover {
+  /* background: #13c047; */
 }
 button.air-down {
-    background: red;
+    background: rgba(185, 44, 44, 0.5);
+}
+button.air-down:hover {
+  /* background: #bb0f0f; */
 }

@@ -130,7 +130,7 @@ with open("/layout.html", "r") as f:
 # Simple captive portal handler
 @app.route('/')
 def index(request):
-    return Response(body= html_template , headers={'Content-Type': 'text/html'})
+    return Response(body= html_template, headers={'Content-Type': 'text/html'})
 
 @app.route('/get_setpoints')
 def get_setpoints(request):
@@ -396,6 +396,13 @@ def icon(request):
         icon = f.read()
     return Response(body=icon, headers={'Content-Type': 'image/png'})
 
+# Serve tire.jpeg as the background
+@app.route('/tire.jpeg')
+def tire(request):
+    with open('tire.jpeg', 'rb') as f:
+        tire = f.read()
+    return Response(body=tire, headers={'Content-Type': 'image/jpeg'})
+
 # Catch-all: serve the captive portal page for all unknown URLs
 @app.route('/<path:path>')
 def catch_all(request, path):
@@ -406,7 +413,7 @@ COMMAND_DURATION = 10  # seconds for a command to complete
 last_command_time = {}  # Tracks when commands started (for backward compatibility)
 
 # Adaptive pressure control parameters
-PRESSURE_TOLERANCE = 0.5  # PSI tolerance for target pressure
+PRESSURE_TOLERANCE = 0.3  # PSI tolerance for target pressure
 ADJUSTMENT_INTERVAL = 1.0  # Seconds between adjustments
 MIN_VALVE_TIME = 1.0     # Minimum valve open time (seconds)
 MAX_VALVE_TIME_UP = 30.0  # Maximum valve open time for air_up (seconds)
