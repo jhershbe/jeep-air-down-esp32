@@ -3,83 +3,98 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: #f8fafc;
+    background-image: url('./tire.jpeg');
 }
 body {
     display: flex;
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
+    background-color: black;
+    background-repeat:no-repeat;
+    background-position: center bottom;
+    background-attachment: fixed;
+    background-size: cover;
 }
 .container {
-    gap: 2em;
-
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    padding: 1.2em 2em 2em 2em;
-    margin-top: 2em;
-    max-width: 420px;
-    width: 95vw;
+    background: rgba(2, 2, 36, 0.77);
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.8);
+    padding: 1.2em, 1.2em;
+    margin-top: 1em;
+    max-width: 400px;
+    width: 91vw;
     text-align: center;
 }
 h2 {
-    font-size: 2.2em;
+    font-size: 1.2em;
     margin-bottom: 0.6em;
-    color: #1a202c;
+    color: #93b2e2;
 }
 .pressure-value {
-    font-size: 5em;
+    font-size: 3em;
     font-weight: bold;
+    text-align: right;
     color: #2563eb;
     margin-bottom: 0.3em;
     display: block;
     letter-spacing: 0.04em;
+    margin-left: 1em;
+    margin-right:.4em;
+    padding: 2em,0em;
+    width: 50%;
 }
 .psi-label {
-    font-size: 1.2em;
+    font-size: .8em;
     color: #64748b;
-    margin-bottom: 1.2em;
+    margin-bottom: .8em;
     display: block;
 }
 .setpoints {
-    margin: 2em 0 1.5em 0;
-    display: flex;
+    margin: 1.1em 0 1.2em 0;
     flex-direction: column;
-    align-items: center;
-    gap: 1em;
+    display: flex;
+    gap: .5em
 }
 .setpoints label {
     font-size: 1.1em;
-    color: #374151;
-    margin-bottom: 0.2em;
+    color: #93b2e2;
+    margin: .2em -.5em .2em 1em;
 }
 .setpoints input[type='number'] {
-    font-size: 2em;
-    width: 120px;
+    font-size: 1em;
+    width: 60px;
     padding: 0.3em 0.6em;
     border-radius: 8px;
     border: 1px solid #cbd5e1;
     text-align: center;
-    margin-bottom: 0.5em;
+    margin: .5em;
+
 }
 button {
-    background: #2563eb;
+    background: #1352da66;
     color: #fff;
     border: none;
-    border-radius: 12px;
-    font-size: 2em;
-    padding: 1em 2.5em;
-    margin-top: 1.8em;
+    border-radius: 24px;
+    font-size: 1.2em;
+    padding: 1em 1.5em;
     cursor: pointer;
     transition: background 0.2s;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.12);
-    min-width: 70vw;
-    max-width: 400px;
+    width:100%;
     display: block;
-    margin-left: auto;
-    margin-right: auto;
 }
 button:hover {
-    background: #1d4ed8;
+  /* background: #1c1ac0; */
+}
+button.air-up {
+    background: rgba(63, 163, 63, 0.5);
+}
+button.air-up:hover {
+  /* background: #13c047; */
+}
+button.air-down {
+    background: rgba(185, 44, 44, 0.5);
+}
+button.air-down:hover {
+  /* background: #bb0f0f; */
 }

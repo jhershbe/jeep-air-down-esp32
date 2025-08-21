@@ -123,41 +123,14 @@ import uasyncio as asyncio
 app = Microdot()
 Response.default_content_type = 'application/json'
 
+# Load HTML layout from template
+with open("/layout.html", "r") as f:
+    html_template = f.read()
+
 # Simple captive portal handler
 @app.route('/')
 def index(request):
-    return Response(body="""
-<html>
-<head>
-    <title>Jeep Air Down</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <meta name='apple-mobile-web-app-capable' content='yes'>
-    <meta name='apple-mobile-web-app-title' content='Jeep Air Down'>
-    <link rel='apple-touch-icon' href='/icon.png'>
-    <link rel='stylesheet' href='/style.css'>
-</head>
-<body>
-    <div class='container'>
-        <h2>Air Pressure Sensor</h2>
-        <span class='pressure-value' id='pressure'>--</span>
-        <span class='psi-label'>PSI</span>
-        <div class='command-buttons'>
-            <button class='air-up' onclick='airUp()'>Air Up</button>
-            <button class='air-down' onclick='airDown()'>Air Down</button>
-        </div>
-        <div class='setpoints'>
-            <label for='setpoint_onroad'>On Road (PSI):</label>
-            <input type='number' id='setpoint_onroad' min='0' max='300' step='0.1'>
-            <label for='setpoint_offroad'>Off Road (PSI):</label>
-            <input type='number' id='setpoint_offroad' min='0' max='300' step='0.1'>
-            <button class='save-setpoints' onclick='saveSetpoints()'>Save Setpoints</button>
-        </div>
-
-    </div>
-    <script src='/script.js'></script>
-</body>
-</html>
-""", headers={'Content-Type': 'text/html'})
+    return Response(body= html_template, headers={'Content-Type': 'text/html'})
 
 @app.route('/get_setpoints')
 def get_setpoints(request):
@@ -423,6 +396,13 @@ def icon(request):
         icon = f.read()
     return Response(body=icon, headers={'Content-Type': 'image/png'})
 
+# Serve tire.jpeg as the background
+@app.route('/tire.jpeg')
+def tire(request):
+    with open('tire.jpeg', 'rb') as f:
+        tire = f.read()
+    return Response(body=tire, headers={'Content-Type': 'image/jpeg'})
+
 # Catch-all: serve the captive portal page for all unknown URLs
 @app.route('/<path:path>')
 def catch_all(request, path):
@@ -433,7 +413,7 @@ COMMAND_DURATION = 10  # seconds for a command to complete
 last_command_time = {}  # Tracks when commands started (for backward compatibility)
 
 # Adaptive pressure control parameters
-PRESSURE_TOLERANCE = 0.5  # PSI tolerance for target pressure
+PRESSURE_TOLERANCE = 0.3  # PSI tolerance for target pressure
 ADJUSTMENT_INTERVAL = 1.0  # Seconds between adjustments
 MIN_VALVE_TIME = 1.0     # Minimum valve open time (seconds)
 MAX_VALVE_TIME_UP = 30.0  # Maximum valve open time for air_up (seconds)

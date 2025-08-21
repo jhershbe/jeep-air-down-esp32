@@ -9,15 +9,17 @@ let airDownExpectedState = 'live';
 // Refresh pressure reading
 function refreshPressure() {
     fetch('/pressure').then(r => r.json()).then(d => {
-        document.getElementById('pressure').innerText = d.pressure;
+        document.getElementById('pressure').innerText = parseInt(d.pressure) + ' psi';
     });
 }
 
 // Load setpoints from server
 function loadSetpoints() {
     fetch('/get_setpoints').then(r => r.json()).then(d => {
-        document.getElementById('setpoint_onroad').value = d.setpoint_onroad;
-        document.getElementById('setpoint_offroad').value = d.setpoint_offroad;
+        setpoint_onroad_last = d.setpoint_onroad; // Used later so buttons don't update visually until saved
+        setpoint_offroad_last = d.setpoint_offroad; // Used later so buttons don't update visually until saved
+        document.getElementById('setpoint_onroad').value = setpoint_onroad_last;
+        document.getElementById('setpoint_offroad').value = setpoint_offroad_last;
     });
 }
 
@@ -26,8 +28,9 @@ function saveSetpoints() {
     const btn = document.querySelector('.save-setpoints');
     const originalBg = btn.style.backgroundColor;
     const originalColor = btn.style.color;
-    btn.style.backgroundColor = '#bae6fd'; // mild baby blue
+    btn.style.backgroundColor = '#bae5fdc4'; // mild baby blue
     btn.style.color = '#2563eb'; // blue text for contrast
+    btn.style.fontWeight = 'bold';
     btn.disabled = true;
     const s_onroad = document.getElementById('setpoint_onroad').value;
     const s_offroad = document.getElementById('setpoint_offroad').value;
@@ -39,31 +42,34 @@ function saveSetpoints() {
         btn.style.backgroundColor = originalBg;
         btn.style.color = originalColor;
         btn.disabled = false;
+        setpoint_onroad_last = s_onroad; // Update so buttons only update visually when saved
+        setpoint_offroad_last = s_offroad; // Update so buttons only update visually when saved
+
     });
 }
 
 // Apply button visual changes immediately
 function updateButtonVisuals(btn, state, elapsed) {
     if (state === 'idle') {
-        btn.textContent = btn.classList.contains('air-up') ? 'Air Up' : 'Air Down';
+        btn.textContent = btn.classList.contains('air-up') ? 'Air Up to ' + setpoint_onroad_last + ' psi' : 'Air Down to ' + setpoint_offroad_last + ' psi';
         btn.style.backgroundColor = '';
         btn.style.color = '';
         btn.disabled = false;
     } else if (state === 'starting') {
-        btn.textContent = btn.classList.contains('air-up') ? 'Air Up...' : 'Air Down...';
+        btn.textContent = btn.classList.contains('air-up') ? 'Air Up to ' + setpoint_onroad_last + ' psi' : 'Air Down to ' + setpoint_offroad_last + ' psi';
         btn.style.backgroundColor = '';
         btn.style.color = '';
         btn.disabled = true;
     } else if (state === 'running') {
         const timeText = elapsed !== undefined ? `Cancel (${elapsed.toFixed(0)}s)` : 'Cancel';
         btn.textContent = timeText;
-        btn.style.backgroundColor = '#bae6fd';
-        btn.style.color = '#2563eb';
+        btn.style.backgroundColor = btn.classList.contains('air-up') ? '#57e963c2' : '#cc0202bb'; // green for air up, red for air down
+        btn.style.fontWeight = 'bold';
         btn.disabled = false;
     } else if (state === 'cancelling') {
         btn.textContent = 'Cancelling...';
-        btn.style.backgroundColor = '#bae6fd';
-        btn.style.color = '#2563eb';
+        btn.style.backgroundColor = btn.classList.contains('air-up') ? 'rgba(63, 163, 63, 0.5)' : 'rgba(185, 44, 44, 0.5'; // green for air up, red for air down
+        btn.style.fontWeight = 'bold';
         btn.disabled = true;
     } else if (state === 'blocked') {
         btn.style.backgroundColor = '#fecaca';
